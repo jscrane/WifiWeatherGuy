@@ -28,8 +28,8 @@ Print &out = Serial;
 const size_t bufferSize = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
 DynamicJsonBuffer jsonBuffer(bufferSize);
 
-uint32_t next_fetch = 0;
-uint16_t update_interval;
+uint32_t last_fetch = 0;
+uint32_t update_interval;
 
 void setup() {
 
@@ -62,7 +62,7 @@ void setup() {
     else if (strcmp(p, "station") == 0)
       strcpy(station, strsep(&b, "\n"));
     else if (strcmp(p, "update") == 0)
-      update_interval = atoi(strsep(&b, "\n"));
+      update_interval = 1000*atoi(strsep(&b, "\n"));
     else if (strcmp(p, "metric") == 0)
       metric = (bool)atoi(strsep(&b, "\n"));
     p = strsep(&b, "=");
@@ -96,6 +96,8 @@ void setup() {
   out.println(ssid);
   out.println(WiFi.localIP());
 #endif
+
+  last_fetch = -update_interval;
 }
 
 const char *icon;
@@ -373,8 +375,11 @@ void update_display() {
 void loop() {
 
   uint32_t now = millis();
-  if (now > next_fetch) {
-    next_fetch = now + update_interval * 1000L;
+  if (now - last_fetch > update_interval) {
+#ifdef DEBUG
+    out.println(F("Updating..."));
+#endif
+    last_fetch = now;
     WiFiClient client;
     if (client.connect(host, 80)) {
       client.print(String("GET /api/") + key + "/astronomy/conditions/q/" + station
@@ -386,8 +391,7 @@ void loop() {
         client.find("\r\n\r\n");
         JsonObject &root = jsonBuffer.parseObject(client);
         JsonObject& current_observation = root["current_observation"];
-        const char *local_epoch = current_observation["local_epoch"];
-        epoch = (time_t)atoi(local_epoch);
+        epoch = (time_t)atoi(current_observation["observation_epoch"]);
         icon = current_observation["icon"];
         weather = current_observation["weather"];
         if (metric) {
