@@ -1,0 +1,6 @@
+ssid=TVC15
+password=
+key=7ecb9b676eba3283
+station=EIME
+update=1200
+metric=1
