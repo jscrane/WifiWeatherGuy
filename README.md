@@ -5,6 +5,8 @@ WeatherGuy for ESP8266
 - Wemos D1 Mini
 - ILI9163-based TFT display
 - Connect the display to the ESP8266 [as described here](http://henrysbench.capnfatz.com/henrys-bench/arduino-displays/arduino-1-44-in-spi-tft-display-tutorial/), with CS on D6 and DC on D8.
+- Connect the display's LED to D2 to automatically turn it off and a push
+  switch to D3 and GND to turn it back on again.
 
 ## Software
 - Arduino 1.8.4

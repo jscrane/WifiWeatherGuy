@@ -1,4 +1,3 @@
 - Webserver for configuration and firmware update
-- Turn on with switch
 - About screen with switch for IP address and mDNS
 - Drive LED from PWM to fade out
