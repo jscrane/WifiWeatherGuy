@@ -18,12 +18,11 @@ const char host[] = "api.wunderground.com";
 
 #define CS D6
 #define DC D8
-#define LED D2
+#define TFT_LED D2
 #define SWITCH D3
 
 TFT_ILI9163C tft = TFT_ILI9163C(CS, DC);
 
-//Print &out = tft;
 Print &out = Serial;
 #define DEBUG
 
@@ -34,6 +33,7 @@ uint32_t last_fetch = 0;
 uint32_t update_interval;
 uint32_t display_on = 0;
 uint32_t on_time;
+byte bright = 255, dim = 0, fade;
 
 void setup() {
 
@@ -104,8 +104,8 @@ void setup() {
 #endif
 
   pinMode(SWITCH, INPUT_PULLUP);
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, HIGH);
+  fade = bright;
+  analogWrite(TFT_LED, fade);
   
   last_fetch = -update_interval;
 }
@@ -226,13 +226,16 @@ void update_display() {
 void loop() {
 
   uint32_t now = millis();
-  bool on = digitalRead(LED);
-  
-  if (on && now - display_on > on_time) {
-    digitalWrite(LED, LOW);
-  } else if (!on && !digitalRead(SWITCH)) {
-    digitalWrite(LED, HIGH);
-    display_on = now;  
+
+  if (fade == dim) {
+    if (!digitalRead(SWITCH)) {
+      display_on = now;
+      fade = bright;
+      analogWrite(TFT_LED, fade);
+    }
+  } else if (now - display_on > on_time) {
+    analogWrite(TFT_LED, --fade);
+    delay(25);
   }
   
   if (now - last_fetch > update_interval) {
@@ -286,5 +289,4 @@ void loop() {
     } else
       out.println(F("Connection failed!"));
   }
-
 }
