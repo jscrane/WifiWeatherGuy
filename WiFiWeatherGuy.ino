@@ -39,10 +39,17 @@ uint8_t bright = 255, dim = 0, fade;
 
 void setup() {
 
+  Serial.begin(115200);
+
   tft.begin();
   tft.setTextColor(WHITE, BLACK);
+  tft.setCursor(0, 0);
 
-  Serial.begin(115200);
+  pinMode(SWITCH, INPUT_PULLUP);
+  fade = bright;
+  analogWrite(TFT_LED, fade);
+
+  tft.println(F("Weather Guy (c)2017"));
 
   bool result = SPIFFS.begin();
   out.print("SPIFFS: ");
@@ -81,24 +88,22 @@ void setup() {
   }
   f.close();
 
-#ifdef DEBUG
-  out.print(F("ssid: "));
-  out.println(ssid);
-  out.print(F("password: "));
-  out.println(password);
-  out.print(F("key: "));
-  out.println(key);
-  out.print(F("station: "));
-  out.println(station);
-  out.print(F("update: "));
-  out.println(update_interval);
-  out.print(F("metric: "));
-  out.println(metric);
-  out.print(F("bright: "));
-  out.println(bright);
-  out.print(F("dim: "));
-  out.println(dim);
-#endif
+  tft.print(F("ssid: "));
+  tft.println(ssid);
+  tft.print(F("password: "));
+  tft.println(password);
+  tft.print(F("key: "));
+  tft.println(key);
+  tft.print(F("station: "));
+  tft.println(station);
+  tft.print(F("update: "));
+  tft.println(update_interval);
+  tft.print(F("metric: "));
+  tft.println(metric);
+  tft.print(F("bright: "));
+  tft.println(bright);
+  tft.print(F("dim: "));
+  tft.println(dim);
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -112,6 +117,7 @@ void setup() {
   out.println(ssid);
   out.println(WiFi.localIP());
 #endif
+  tft.println(WiFi.localIP());
 
   ArduinoOTA.setHostname("WiFiWeatherGuy");
   ArduinoOTA.onStart([]() {
@@ -138,10 +144,6 @@ void setup() {
     else if (error == OTA_END_ERROR) Serial.println("End Failed");
   });
   ArduinoOTA.begin();
-
-  pinMode(SWITCH, INPUT_PULLUP);
-  fade = bright;
-  analogWrite(TFT_LED, fade);
   
   last_fetch = -update_interval;
 }
