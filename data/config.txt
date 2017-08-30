@@ -6,4 +6,4 @@ metric=1
 update=1200
 display=30
 bright=255
-dim=50
+dim=20

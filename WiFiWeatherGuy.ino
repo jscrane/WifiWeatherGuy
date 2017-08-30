@@ -5,6 +5,8 @@
 #include <ESP8266WiFi.h>
 #include <time.h>
 #include <FS.h>
+#include <ESP8266mDNS.h>
+#include <ArduinoOTA.h>
 
 char ssid[32];
 char password[32];
@@ -110,6 +112,32 @@ void setup() {
   out.println(ssid);
   out.println(WiFi.localIP());
 #endif
+
+  ArduinoOTA.setHostname("WiFiWeatherGuy");
+  ArduinoOTA.onStart([]() {
+#ifdef DEBUG
+    Serial.println("Start");
+#endif
+  });
+  ArduinoOTA.onEnd([]() {
+#ifdef DEBUG
+    Serial.println("\nEnd");
+#endif
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+#ifdef DEBUG
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+#endif
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+  ArduinoOTA.begin();
 
   pinMode(SWITCH, INPUT_PULLUP);
   fade = bright;
@@ -232,6 +260,8 @@ void update_display() {
 }
 
 void loop() {
+
+  ArduinoOTA.handle();
 
   uint32_t now = millis();
 
