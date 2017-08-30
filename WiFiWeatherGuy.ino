@@ -33,7 +33,7 @@ uint32_t last_fetch = 0;
 uint32_t update_interval;
 uint32_t display_on = 0;
 uint32_t on_time;
-byte bright = 255, dim = 0, fade;
+uint8_t bright = 255, dim = 0, fade;
 
 void setup() {
 
@@ -71,6 +71,10 @@ void setup() {
       metric = (bool)atoi(strsep(&b, "\n"));
     else if (strcmp(p, "display") == 0)
       on_time = 1000*atoi(strsep(&b, "\n"));
+    else if (strcmp(p, "bright") == 0)
+      bright = atoi(strsep(&b, "\n"));
+    else if (strcmp(p, "dim") == 0)
+      dim = atoi(strsep(&b, "\n"));
     p = strsep(&b, "=");
   }
   f.close();
@@ -88,6 +92,10 @@ void setup() {
   out.println(update_interval);
   out.print(F("metric: "));
   out.println(metric);
+  out.print(F("bright: "));
+  out.println(bright);
+  out.print(F("dim: "));
+  out.println(dim);
 #endif
 
   WiFi.mode(WIFI_STA);
