@@ -28,9 +28,6 @@ TFT_ILI9163C tft = TFT_ILI9163C(CS, DC);
 Print &out = Serial;
 #define DEBUG
 
-const size_t bufferSize = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
-DynamicJsonBuffer jsonBuffer(bufferSize);
-
 uint32_t last_fetch = 0;
 uint32_t update_interval;
 uint32_t display_on = 0;
@@ -88,6 +85,7 @@ void setup() {
   }
   f.close();
 
+  tft.println();
   tft.print(F("ssid: "));
   tft.println(ssid);
   tft.print(F("password: "));
@@ -98,6 +96,8 @@ void setup() {
   tft.println(station);
   tft.print(F("update: "));
   tft.println(update_interval);
+  tft.print(F("display: "));
+  tft.println(on_time);
   tft.print(F("metric: "));
   tft.println(metric);
   tft.print(F("bright: "));
@@ -117,6 +117,7 @@ void setup() {
   out.println(ssid);
   out.println(WiFi.localIP());
 #endif
+  tft.println();
   tft.println(WiFi.localIP());
 
   ArduinoOTA.setHostname("WiFiWeatherGuy");
@@ -291,6 +292,8 @@ void loop() {
                    + "Connection: close\r\n"
                    + "\r\n");
       if (client.connected()) {
+        const size_t bufferSize = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
+        DynamicJsonBuffer jsonBuffer(bufferSize);
         client.find("\r\n\r\n");
         JsonObject &root = jsonBuffer.parseObject(client);
         JsonObject& current_observation = root["current_observation"];
