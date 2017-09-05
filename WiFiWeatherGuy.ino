@@ -246,7 +246,7 @@ void update_display() {
   tft.print(buf);
 
   // http://www.iquilezles.org/www/articles/sincos/sincos.htm
-  int rad = 60, cx = 80, cy = 64;
+  int rad = tft.width()/3, cx = tft.width()/2, cy = 68;
   const float a = 0.999847695, b = 0.017452406;
   // wind dir is azimuthal angle with N at 0
   float s = 1.0, c = 0.0;
@@ -259,7 +259,7 @@ void update_display() {
   // wind dir rotates clockwise so compensate
   int ex = cx-rad*c, ey = cy-rad*s;
   tft.fillCircle(ex, ey, 3, BLACK);
-  tft.drawLine(ex, ey, ex + wind*(cx - ex)/50, ey+wind*(cy-ey)/50, BLACK);
+  tft.drawLine(ex, ey, ex+wind*(cx-ex)/50, ey+wind*(cy-ey)/50, BLACK);
 }
 
 void loop() {
