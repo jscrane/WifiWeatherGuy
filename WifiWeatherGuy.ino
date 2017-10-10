@@ -164,6 +164,12 @@ const char *sunrise_hour;
 const char *sunrise_minute;
 const char *sunset_hour;
 const char *sunset_minute;
+const char *moonrise_hour;
+const char *moonrise_minute;
+const char *moonset_hour;
+const char *moonset_minute;
+const char *moon_phase;
+const char *age_of_moon;
 time_t epoch;
 const char *city;
 int wind_degrees;
@@ -326,6 +332,12 @@ void loop() {
         sunrise_minute = root["sun_phase"]["sunrise"]["minute"];
         sunset_hour = root["sun_phase"]["sunset"]["hour"];
         sunset_minute = root["sun_phase"]["sunset"]["minute"];
+        age_of_moon = root["moon_phase"]["ageOfMoon"];
+        moon_phase = root["moon_phase"]["phaseOfMoon"];
+        moonrise_hour = root["moon_phase"]["moonrise"]["hour"];
+        moonrise_minute = root["moon_phase"]["moonrise"]["minute"];
+        moonset_hour = root["moon_phase"]["moonset"]["hour"];
+        moonset_minute = root["moon_phase"]["moonset"]["minute"];
         update_display();
       }
       client.stop();

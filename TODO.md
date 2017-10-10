@@ -1,2 +1,4 @@
 - Webserver for configuration and firmware update
 - About screen with switch for IP address and mDNS
+- Screen for Sunrise, Sunset, Moonrise, Moonset and Moon Phase
+- Forecast screens
