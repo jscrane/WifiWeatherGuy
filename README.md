@@ -22,5 +22,5 @@ WeatherGuy for ESP8266.
 ## Note
 The weather icons must be 24-bit bitmaps; convert from GIF as follows:
 
-   % convert foo.gif -type truecolor foo.bmp 
+    % convert foo.gif -type truecolor foo.bmp 
 
