@@ -345,7 +345,7 @@ void loop() {
   } else if (now - display_on > on_time) {
     analogWrite(TFT_LED, --fade);
     delay(25);
-  } else if (swtch) {
+  } else if (swtch && now - display_on > 500) {
     is_weather = !is_weather;
     update_display();
   }
