@@ -18,3 +18,9 @@ WeatherGuy for ESP8266.
 - Edit data/config.txt with your preferences
 - Upload the filesystem (Tools > ESP8266 Sketch Data Upload)
 - Upload the sketch
+
+## Note
+The weather icons must be 24-bit bitmaps; convert from GIF as follows:
+
+   % convert foo.gif -type truecolor foo.bmp 
+
