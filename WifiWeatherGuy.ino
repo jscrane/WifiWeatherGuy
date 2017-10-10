@@ -120,7 +120,7 @@ void setup() {
   tft.println();
   tft.println(WiFi.localIP());
 
-  ArduinoOTA.setHostname("WiFiWeatherGuy");
+  ArduinoOTA.setHostname("WifiWeatherGuy");
   ArduinoOTA.onStart([]() {
 #ifdef DEBUG
     Serial.println("Start");
@@ -194,7 +194,7 @@ static int val_len(int b)
   return 3;
 }
 
-void update_display() {
+void display_weather() {
 
   tft.fillScreen(WHITE);
   tft.setTextColor(BLACK);
@@ -268,17 +268,82 @@ void update_display() {
   tft.drawLine(ex, ey, ex+wind*(cx-ex)/50, ey+wind*(cy-ey)/50, BLACK);
 }
 
+void display_astronomy() {
+
+  tft.fillScreen(BLACK);
+  tft.setTextColor(WHITE);
+
+  tft.setTextSize(2);
+  tft.setCursor(1, 1);
+  tft.print("sun");
+  tft.setCursor(right(4, tft.width(), 2), 1);
+  tft.print("moon");
+  tft.setTextSize(1);
+  tft.setCursor(strlen(sunrise_hour) == 1? 7: 1, 17);
+  tft.print(sunrise_hour);
+  tft.print(':');
+  tft.print(sunrise_minute);  
+  tft.setCursor(1, 25);
+  tft.print(sunset_hour);
+  tft.print(':');
+  tft.print(sunset_minute);
+  
+  const char *rise = "rise";
+  tft.setCursor(centre_text(rise, tft.width()/2, 1), 17);
+  tft.print(rise);
+  const char *set = "set";
+  tft.setCursor(centre_text(set, tft.width()/2, 1), 25);
+  tft.print(set);
+  
+  tft.setCursor(right(3 + strlen(moonrise_hour), tft.width(), 1), 17);
+  tft.print(moonrise_hour);
+  tft.print(':');
+  tft.print(moonrise_minute);
+  tft.setCursor(right(3 + strlen(moonset_hour), tft.width(), 1), 25);
+  tft.print(moonset_hour);
+  tft.print(':');
+  tft.print(moonset_minute);  
+
+  char buf[32];
+  strcpy(buf, "moon");
+  strcat(buf, age_of_moon);
+  bmp_draw(buf, tft.width()/2 - 25, 42);
+    
+  tft.setCursor(centre_text(moon_phase, tft.width()/2, 1), 92);
+  tft.print(moon_phase);
+
+  strftime(buf, sizeof(buf), metric? "%H:%S": "%I:%S%p", localtime(&epoch));
+  tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
+  tft.print(buf);
+  strftime(buf, sizeof(buf), "%a %d", localtime(&epoch));
+  tft.setCursor(centre_text(buf, tft.width()/2, 1), 118);
+  tft.print(buf);
+}
+
+static bool is_weather = true;
+
+void update_display() {
+  if (is_weather)
+    display_weather();
+  else
+    display_astronomy();
+}
+
 void loop() {
 
   ArduinoOTA.handle();
 
   uint32_t now = millis();
+  bool swtch = !digitalRead(SWITCH);
 
-  if (fade == dim) {
-    if (!digitalRead(SWITCH)) {
+  if (swtch) {
+    if (fade == dim) {
       display_on = now;
       fade = bright;
       analogWrite(TFT_LED, fade);
+    } else {
+      is_weather = !is_weather;
+      update_display();
     }
   } else if (now - display_on > on_time) {
     analogWrite(TFT_LED, --fade);
@@ -333,7 +398,7 @@ void loop() {
         sunset_hour = root["sun_phase"]["sunset"]["hour"];
         sunset_minute = root["sun_phase"]["sunset"]["minute"];
         age_of_moon = root["moon_phase"]["ageOfMoon"];
-        moon_phase = root["moon_phase"]["phaseOfMoon"];
+        moon_phase = root["moon_phase"]["phaseofMoon"];
         moonrise_hour = root["moon_phase"]["moonrise"]["hour"];
         moonrise_minute = root["moon_phase"]["moonrise"]["minute"];
         moonset_hour = root["moon_phase"]["moonset"]["hour"];
