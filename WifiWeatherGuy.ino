@@ -336,18 +336,18 @@ void loop() {
   uint32_t now = millis();
   bool swtch = !digitalRead(SWITCH);
 
-  if (swtch) {
-    if (fade == dim) {
+  if (fade == dim) {
+    if (swtch) {
       display_on = now;
       fade = bright;
       analogWrite(TFT_LED, fade);
-    } else {
-      is_weather = !is_weather;
-      update_display();
     }
   } else if (now - display_on > on_time) {
     analogWrite(TFT_LED, --fade);
     delay(25);
+  } else if (swtch) {
+    is_weather = !is_weather;
+    update_display();
   }
   
   if (now - last_fetch > update_interval) {
