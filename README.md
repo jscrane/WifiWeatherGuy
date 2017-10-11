@@ -1,7 +1,7 @@
 # WiFiWeatherGuy
 WeatherGuy for ESP8266.
 
-![Schematic](schematic.png)
+![Schematic](eagle/schematic.png)
 
 ## Hardware
 - Wemos D1 Mini

@@ -34,6 +34,8 @@ uint32_t display_on = 0;
 uint32_t on_time;
 uint8_t bright = 255, dim = 0, fade;
 
+extern int bmp_draw(const char *filename, uint8_t x, uint8_t y);
+
 void setup() {
 
   Serial.begin(115200);
