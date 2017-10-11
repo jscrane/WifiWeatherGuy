@@ -463,19 +463,13 @@ void update_display(int screen) {
       display_weather(conditions);
       break;
     case 1:
-      display_astronomy(conditions);
-      break;
     case 2:
-      display_forecast(forecasts[0]);
-      break;
     case 3:
-      display_forecast(forecasts[1]);
-      break;
     case 4:
-      display_forecast(forecasts[2]);
+      display_forecast(forecasts[screen - 1]);
       break;
     case 5:
-      display_forecast(forecasts[3]);
+      display_astronomy(conditions);
       break;
   }
 }
