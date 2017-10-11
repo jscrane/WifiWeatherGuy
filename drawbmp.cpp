@@ -1,3 +1,10 @@
+#include <stdint.h>
+#include <string.h>
+#include <FS.h>
+#include <TFT_ILI9163C.h>
+
+extern Print &out;
+
 // These read 16- and 32-bit types from the SD card file.
 // BMP data is stored little-endian, Arduino is little-endian too.
 // May need to reverse subscript order if porting elsewhere.
@@ -14,7 +21,7 @@ static uint32_t read32(File &f) {
 }
 
 // from Adafruit's spitftbitmap ST7735 example
-int bmp_draw(const char *filename, uint8_t x, uint8_t y) {
+int bmp_draw(TFT_ILI9163C &tft, const char *filename, uint8_t x, uint8_t y) {
   int      bmpWidth, bmpHeight;   // W+H in pixels
   uint8_t  bmpDepth;              // Bit depth (currently must be 24)
   uint32_t bmpImageoffset;        // Start of image data in file

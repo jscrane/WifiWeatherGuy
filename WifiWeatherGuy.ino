@@ -34,7 +34,7 @@ uint32_t display_on = 0;
 uint32_t on_time;
 uint8_t bright = 255, dim = 0, fade;
 
-extern int bmp_draw(const char *filename, uint8_t x, uint8_t y);
+extern int bmp_draw(TFT_ILI9163C &tft, const char *filename, uint8_t x, uint8_t y);
 
 void setup() {
 
@@ -176,6 +176,46 @@ time_t epoch;
 const char *city;
 int wind_degrees;
 
+void update_weather(JsonObject &root) {
+
+  JsonObject& current_observation = root["current_observation"];
+  epoch = (time_t)atoi(current_observation["observation_epoch"]);
+  icon = current_observation["icon"];
+  weather = current_observation["weather"];
+  if (metric) {
+    temp = current_observation["temp_c"];
+    feelslike = atoi(current_observation["feelslike_c"]);
+    temp_unit = 'C';
+    wind = current_observation["wind_kph"];
+    wind_unit = "kph";
+    atmos_pressure = atoi(current_observation["pressure_mb"]);
+    pres_unit = "mb";
+  } else {
+    temp = current_observation["temp_f"];
+    feelslike = atoi(current_observation["feelslike_f"]);
+    temp_unit = 'F';
+    wind = current_observation["wind_mph"];
+    wind_unit = "mph";
+    atmos_pressure = atoi(current_observation["pressure_in"]);
+    pres_unit = "in";
+  }
+  humidity = current_observation["relative_humidity"];
+  pressure_trend = current_observation["pressure_trend"];
+  wind_dir = current_observation["wind_dir"];
+  wind_degrees = current_observation["wind_degrees"];
+  city = current_observation["observation_location"]["city"];
+  sunrise_hour = root["sun_phase"]["sunrise"]["hour"];
+  sunrise_minute = root["sun_phase"]["sunrise"]["minute"];
+  sunset_hour = root["sun_phase"]["sunset"]["hour"];
+  sunset_minute = root["sun_phase"]["sunset"]["minute"];
+  age_of_moon = root["moon_phase"]["ageOfMoon"];
+  moon_phase = root["moon_phase"]["phaseofMoon"];
+  moonrise_hour = root["moon_phase"]["moonrise"]["hour"];
+  moonrise_minute = root["moon_phase"]["moonrise"]["minute"];
+  moonset_hour = root["moon_phase"]["moonset"]["hour"];
+  moonset_minute = root["moon_phase"]["moonset"]["minute"];
+}
+
 static int centre_text(const char *s, int x, int size)
 {
   return x - (strlen(s) * size * 6) / 2;
@@ -244,7 +284,7 @@ void display_weather() {
   tft.print(city);
   tft.setCursor(centre_text(weather, tft.width()/2, 1), 34);
   tft.print(weather);
-  bmp_draw(icon, tft.width()/2 - 25, 42);
+  bmp_draw(tft, icon, tft.width()/2 - 25, 42);
   char buf[32];
   strftime(buf, sizeof(buf), metric? "%H:%S": "%I:%S%p", localtime(&epoch));
   tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
@@ -309,7 +349,7 @@ void display_astronomy() {
   char buf[32];
   strcpy(buf, "moon");
   strcat(buf, age_of_moon);
-  bmp_draw(buf, tft.width()/2 - 25, 42);
+  bmp_draw(tft, buf, tft.width()/2 - 25, 42);
     
   tft.setCursor(centre_text(moon_phase, tft.width()/2, 1), 92);
   tft.print(moon_phase);
@@ -369,42 +409,7 @@ void loop() {
         DynamicJsonBuffer jsonBuffer(bufferSize);
         client.find("\r\n\r\n");
         JsonObject &root = jsonBuffer.parseObject(client);
-        JsonObject& current_observation = root["current_observation"];
-        epoch = (time_t)atoi(current_observation["observation_epoch"]);
-        icon = current_observation["icon"];
-        weather = current_observation["weather"];
-        if (metric) {
-          temp = current_observation["temp_c"];
-          feelslike = atoi(current_observation["feelslike_c"]);
-          temp_unit = 'C';
-          wind = current_observation["wind_kph"];
-          wind_unit = "kph";
-          atmos_pressure = atoi(current_observation["pressure_mb"]);
-          pres_unit = "mb";
-        } else {
-          temp = current_observation["temp_f"];
-          feelslike = atoi(current_observation["feelslike_f"]);
-          temp_unit = 'F';          
-          wind = current_observation["wind_mph"];
-          wind_unit = "mph";
-          atmos_pressure = atoi(current_observation["pressure_in"]);
-          pres_unit = "in";
-        }
-        humidity = current_observation["relative_humidity"];
-        pressure_trend = current_observation["pressure_trend"];
-        wind_dir = current_observation["wind_dir"];
-        wind_degrees = current_observation["wind_degrees"];
-        city = current_observation["observation_location"]["city"];
-        sunrise_hour = root["sun_phase"]["sunrise"]["hour"];
-        sunrise_minute = root["sun_phase"]["sunrise"]["minute"];
-        sunset_hour = root["sun_phase"]["sunset"]["hour"];
-        sunset_minute = root["sun_phase"]["sunset"]["minute"];
-        age_of_moon = root["moon_phase"]["ageOfMoon"];
-        moon_phase = root["moon_phase"]["phaseofMoon"];
-        moonrise_hour = root["moon_phase"]["moonrise"]["hour"];
-        moonrise_minute = root["moon_phase"]["moonrise"]["minute"];
-        moonset_hour = root["moon_phase"]["moonset"]["hour"];
-        moonset_minute = root["moon_phase"]["moonset"]["minute"];
+        update_weather(root);
         update_display();
       }
       client.stop();
