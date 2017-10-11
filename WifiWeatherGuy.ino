@@ -28,8 +28,8 @@ TFT_ILI9163C tft = TFT_ILI9163C(CS, DC);
 Print &out = Serial;
 #define DEBUG
 
-uint32_t last_fetch = 0;
-uint32_t update_interval;
+uint32_t last_fetch_conditions = 0, last_fetch_forecasts = 0;
+uint32_t conditions_interval, forecasts_interval;
 uint32_t display_on = 0;
 uint32_t on_time;
 uint8_t bright = 255, dim = 0, fade;
@@ -73,8 +73,10 @@ void setup() {
       strcpy(key, strsep(&b, "\n"));
     else if (strcmp(p, "station") == 0)
       strcpy(station, strsep(&b, "\n"));
-    else if (strcmp(p, "update") == 0)
-      update_interval = 1000*atoi(strsep(&b, "\n"));
+    else if (strcmp(p, "conditions_interval") == 0)
+      conditions_interval = 1000*atoi(strsep(&b, "\n"));
+    else if (strcmp(p, "forecasts_interval") == 0)
+      forecasts_interval = 1000*atoi(strsep(&b, "\n"));
     else if (strcmp(p, "metric") == 0)
       metric = (bool)atoi(strsep(&b, "\n"));
     else if (strcmp(p, "display") == 0)
@@ -96,8 +98,10 @@ void setup() {
   tft.println(key);
   tft.print(F("station: "));
   tft.println(station);
-  tft.print(F("update: "));
-  tft.println(update_interval);
+  tft.print(F("condition...: "));
+  tft.println(conditions_interval);
+  tft.print(F("forecast...: "));
+  tft.println(forecasts_interval);
   tft.print(F("display: "));
   tft.println(on_time);
   tft.print(F("metric: "));
@@ -148,7 +152,8 @@ void setup() {
   });
   ArduinoOTA.begin();
   
-  last_fetch = -update_interval;
+  last_fetch_conditions = -conditions_interval;
+  last_fetch_forecasts = -forecasts_interval;
 }
 
 struct Conditions {
@@ -516,11 +521,11 @@ void loop() {
     update_display(screen);
   }
   
-  if (now - last_fetch > update_interval) {
+  if (now - last_fetch_conditions > conditions_interval) {
 #ifdef DEBUG
     out.println(F("Updating conditions..."));
 #endif
-    last_fetch = now;
+    last_fetch_conditions = now;
     WiFiClient client;
     if (connect_and_get(client, "astronomy/conditions")) {
       const size_t bufferSize = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + 
@@ -531,10 +536,14 @@ void loop() {
       client.stop();
     } else
       out.println(F("Failed to fetch conditions!"));
+  }
 
+  if (now - last_fetch_forecasts > forecasts_interval) {
 #ifdef DEBUG
     out.println(F("Updating forecast..."));
 #endif
+    last_fetch_forecasts = now;
+    WiFiClient client;
     if (connect_and_get(client, "forecast")) {
       const size_t bufferSize = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 
                                 8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20);
