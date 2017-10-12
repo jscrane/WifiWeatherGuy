@@ -228,11 +228,13 @@ void update_conditions(JsonObject &root, struct Conditions &c) {
 struct Forecast {
 
   time_t epoch;
+  char day[4];
   int temp_high;
   int temp_low;
   int max_wind;
   int ave_wind;
   char wind_dir[8];
+  int wind_degrees;
   int ave_humidity;
   char conditions[32];
   char icon[16];
@@ -246,6 +248,7 @@ void update_forecasts(JsonObject &root) {
     JsonObject &day = days[i];
     struct Forecast &f = forecasts[i];
     f.epoch = (time_t)atoi(day["date"]["epoch"]);
+    strncpy(f.day, day["date"]["weekday_short"], sizeof(f.day));
     if (metric) {
       f.temp_high = atoi(day["high"]["celsius"]);
       f.temp_low = atoi(day["low"]["celsius"]);
@@ -258,6 +261,7 @@ void update_forecasts(JsonObject &root) {
       f.ave_wind = day["avewind"]["mph"];
     }
     f.ave_humidity = day["avehumidity"];
+    f.wind_degrees = day["avewind"]["degrees"];
     strncpy(f.wind_dir, day["avewind"]["dir"], sizeof(f.wind_dir));
     strncpy(f.conditions, day["conditions"], sizeof(f.conditions));
     strncpy(f.icon, day["icon"], sizeof(f.icon));
@@ -284,35 +288,75 @@ static int val_len(int b)
   return 3;
 }
 
+static void display_time(time_t &epoch) {
+  char buf[32];
+  strftime(buf, sizeof(buf), metric? "%H:%S": "%I:%S%p", localtime(&epoch));
+  tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
+  tft.print(buf);
+  strftime(buf, sizeof(buf), "%a %d", localtime(&epoch));
+  tft.setCursor(centre_text(buf, tft.width()/2, 1), 118);
+  tft.print(buf);
+}
+
+static void display_wind(int wind_degrees, int wind_speed) {
+    // http://www.iquilezles.org/www/articles/sincos/sincos.htm
+  int rad = tft.width()/3, cx = tft.width()/2, cy = 68;
+  const float a = 0.999847695, b = 0.017452406;
+  // wind dir is azimuthal angle with N at 0
+  float sin = 1.0, cos = 0.0;
+  for (uint16_t i = 0; i < wind_degrees; i++) {
+    const float ns = a*sin + b*cos;
+    const float nc = a*cos - b*sin;
+    cos = nc;
+    sin = ns;
+  }
+  // wind dir rotates clockwise so compensate
+  int ex = cx-rad*cos, ey = cy-rad*sin;
+  tft.fillCircle(ex, ey, 3, BLACK);
+  tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/50, ey+wind_speed*(cy-ey)/50, BLACK);
+}
+
+static void display_wind_speed(int wind_speed, const char *wind_dir, const char *wind_unit) {
+  tft.setTextSize(2);
+  tft.setCursor(1, 1);
+  tft.print(wind_speed);
+  tft.setTextSize(1);
+  tft.print(wind_unit);
+  tft.setCursor(1, 17);
+  tft.print(wind_dir);
+}
+
+static void display_temperature(int temp, int temp_min, char temp_unit) {
+  tft.setTextSize(2);
+  tft.setCursor(1, tft.height() - 16);
+  tft.print(temp);
+  tft.setTextSize(1);
+  tft.print(temp_unit);
+  if (temp != temp_min) {
+    tft.setCursor(1, tft.height() - 24);
+    tft.print(temp_min);
+  }
+}
+
+static void display_humidity(int humidity) {
+  tft.setTextSize(2);
+  tft.setCursor(right(val_len(humidity), tft.width(), 2) - 6, tft.height() - 16);
+  tft.print(humidity);
+  tft.setTextSize(1);
+  tft.setCursor(tft.width() - 6, tft.height() - 16);
+  tft.print('%');
+}
+
 void display_weather(struct Conditions &c) {
 
   tft.fillScreen(WHITE);
   tft.setTextColor(BLACK);
 
-  tft.setTextSize(2);
-  tft.setCursor(1, 1);
-  tft.print(c.wind);
-  tft.setTextSize(1);
-  tft.print(c.wind_unit);
-  tft.setCursor(1, 17);
-  tft.print(c.wind_dir);
+  display_wind_speed(c.wind, c.wind_dir, c.wind_unit);
 
-  tft.setTextSize(2);
-  tft.setCursor(1, tft.height() - 16);
-  tft.print(c.temp);
-  tft.setTextSize(1);
-  tft.print(c.temp_unit);
-  if (c.temp != c.feelslike) {
-    tft.setCursor(1, tft.height() - 24);
-    tft.print(c.feelslike);
-  }
+  display_temperature(c.temp, c.feelslike, c.temp_unit);
 
-  tft.setTextSize(2);
-  tft.setCursor(right(val_len(c.humidity), tft.width(), 2) - 6, tft.height() - 16);
-  tft.print(c.humidity);
-  tft.setTextSize(1);
-  tft.setCursor(tft.width() - 6, tft.height() - 16);
-  tft.print('%');
+  display_humidity(c.humidity);
 
   tft.setTextSize(2);
   tft.setCursor(right(val_len(c.atmos_pressure), tft.width(), 2)-6*strlen(c.pres_unit), 1);
@@ -332,29 +376,10 @@ void display_weather(struct Conditions &c) {
   tft.setCursor(centre_text(c.weather, tft.width()/2, 1), 34);
   tft.print(c.weather);
   bmp_draw(tft, c.icon, tft.width()/2 - 25, 42);
-  char buf[32];
-  strftime(buf, sizeof(buf), metric? "%H:%S": "%I:%S%p", localtime(&c.epoch));
-  tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
-  tft.print(buf);
-  strftime(buf, sizeof(buf), "%a %d", localtime(&c.epoch));
-  tft.setCursor(centre_text(buf, tft.width()/2, 1), 118);
-  tft.print(buf);
 
-  // http://www.iquilezles.org/www/articles/sincos/sincos.htm
-  int rad = tft.width()/3, cx = tft.width()/2, cy = 68;
-  const float a = 0.999847695, b = 0.017452406;
-  // wind dir is azimuthal angle with N at 0
-  float sin = 1.0, cos = 0.0;
-  for (uint16_t i = 0; i < c.wind_degrees; i++) {
-    const float ns = a*sin + b*cos;
-    const float nc = a*cos - b*sin;
-    cos = nc;
-    sin = ns;
-  }
-  // wind dir rotates clockwise so compensate
-  int ex = cx-rad*cos, ey = cy-rad*sin;
-  tft.fillCircle(ex, ey, 3, BLACK);
-  tft.drawLine(ex, ey, ex+c.wind*(cx-ex)/50, ey+c.wind*(cy-ey)/50, BLACK);
+  display_time(c.epoch);
+
+  display_wind(c.wind_degrees, c.wind);
 }
 
 void display_astronomy(struct Conditions &c) {
@@ -397,64 +422,36 @@ void display_astronomy(struct Conditions &c) {
   strcpy(buf, "moon");
   strcat(buf, c.age_of_moon);
   bmp_draw(tft, buf, tft.width()/2 - 25, 42);
-    
+
   tft.setCursor(centre_text(c.moon_phase, tft.width()/2, 1), 92);
   tft.print(c.moon_phase);
 
-  strftime(buf, sizeof(buf), metric? "%H:%S": "%I:%S%p", localtime(&c.epoch));
-  tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
-  tft.print(buf);
-  strftime(buf, sizeof(buf), "%a %d", localtime(&c.epoch));
-  tft.setCursor(centre_text(buf, tft.width()/2, 1), 118);
-  tft.print(buf);
+  display_time(c.epoch);
 }
 
 void display_forecast(struct Forecast &f) {
 
-  char buf[32];
-
   tft.fillScreen(WHITE);
   tft.setTextColor(BLACK);
 
-  tft.setTextSize(2);
-  tft.setCursor(1, 1);
-  tft.print(f.ave_wind);
-  tft.setTextSize(1);
-  tft.print(conditions.wind_unit);
-  tft.setCursor(1, 17);
-  tft.print(f.wind_dir);
+  display_wind_speed(f.ave_wind, f.wind_dir, conditions.wind_unit);
 
-  tft.setTextSize(2);
-  tft.setCursor(1, tft.height() - 16);
-  tft.print(f.temp_high);
-  tft.setTextSize(1);
-  tft.print(conditions.temp_unit);
-  tft.setCursor(1, tft.height() - 24);
-  tft.print(f.temp_low);
+  display_temperature(f.temp_high, f.temp_low, conditions.temp_unit);
 
-  tft.setTextSize(2);
-  tft.setCursor(right(val_len(f.ave_humidity), tft.width(), 2) - 6, tft.height() - 16);
-  tft.print(f.ave_humidity);
-  tft.setTextSize(1);
-  tft.setCursor(tft.width() - 6, tft.height() - 16);
-  tft.print('%');
+  display_humidity(f.ave_humidity);
 
   tft.setTextSize(2);
   tft.setCursor(right(3, tft.width(), 2), 1);
-  strftime(buf, sizeof(buf), "%a", localtime(&f.epoch));
-  tft.print(buf);
+  tft.print(f.day);
 
   tft.setTextSize(1);
   tft.setCursor(centre_text(f.conditions, tft.width()/2, 1), 34);
   tft.print(f.conditions);
   bmp_draw(tft, f.icon, tft.width()/2 - 25, 42);
 
-  strftime(buf, sizeof(buf), metric? "%H:%S": "%I:%S%p", localtime(&f.epoch));
-  tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
-  tft.print(buf);
-  strftime(buf, sizeof(buf), "%a %d", localtime(&f.epoch));
-  tft.setCursor(centre_text(buf, tft.width()/2, 1), 118);
-  tft.print(buf);
+  display_time(f.epoch);
+
+  display_wind(f.wind_degrees, f.ave_wind);
 }
 
 void update_display(int screen) {
