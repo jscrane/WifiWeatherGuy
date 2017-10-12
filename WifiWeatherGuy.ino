@@ -8,11 +8,6 @@
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
 
-char ssid[32];
-char password[32];
-char key[16];
-char station[32];
-bool metric;
 const char host[] = "api.wunderground.com";
 
 #define BLACK   0x0000
@@ -29,10 +24,19 @@ Print &out = Serial;
 #define DEBUG
 
 uint32_t last_fetch_conditions = 0, last_fetch_forecasts = 0;
-uint32_t conditions_interval, forecasts_interval;
 uint32_t display_on = 0;
-uint32_t on_time;
-uint8_t bright = 255, dim = 0, fade;
+uint8_t fade;
+
+struct configuration {
+  char ssid[33];
+  char password[33];
+  char key[17];
+  char station[33];
+  bool metric;
+  uint32_t conditions_interval, forecasts_interval;
+  uint32_t on_time;
+  uint8_t bright, dim;
+} cfg;
 
 extern int bmp_draw(TFT_ILI9163C &tft, const char *filename, uint8_t x, uint8_t y);
 
@@ -45,10 +49,6 @@ void setup() {
   tft.setCursor(0, 0);
 
   pinMode(SWITCH, INPUT_PULLUP);
-  fade = bright;
-  analogWrite(TFT_LED, fade);
-
-  tft.println(F("Weather Guy (c)2017"));
 
   bool result = SPIFFS.begin();
   out.print("SPIFFS: ");
@@ -65,54 +65,61 @@ void setup() {
   f.readBytes(buf, sizeof(buf));
   char *b = buf, *p = strsep(&b, "=");
   while (p) {
+#ifdef DEBUG
+    out.println(p);
+#endif
     if (strcmp(p, "ssid") == 0)
-      strcpy(ssid, strsep(&b, "\n"));
+      strncpy(cfg.ssid, strsep(&b, "\n"), sizeof(cfg.ssid));
     else if (strcmp(p, "password") == 0)
-      strcpy(password, strsep(&b, "\n"));
+      strncpy(cfg.password, strsep(&b, "\n"), sizeof(cfg.password));
     else if (strcmp(p, "key") == 0)
-      strcpy(key, strsep(&b, "\n"));
+      strncpy(cfg.key, strsep(&b, "\n"), sizeof(cfg.key));
     else if (strcmp(p, "station") == 0)
-      strcpy(station, strsep(&b, "\n"));
+      strncpy(cfg.station, strsep(&b, "\n"), sizeof(cfg.station));
     else if (strcmp(p, "conditions_interval") == 0)
-      conditions_interval = 1000*atoi(strsep(&b, "\n"));
+      cfg.conditions_interval = 1000*atoi(strsep(&b, "\n"));
     else if (strcmp(p, "forecasts_interval") == 0)
-      forecasts_interval = 1000*atoi(strsep(&b, "\n"));
+      cfg.forecasts_interval = 1000*atoi(strsep(&b, "\n"));
     else if (strcmp(p, "metric") == 0)
-      metric = (bool)atoi(strsep(&b, "\n"));
+      cfg.metric = (bool)atoi(strsep(&b, "\n"));
     else if (strcmp(p, "display") == 0)
-      on_time = 1000*atoi(strsep(&b, "\n"));
+      cfg.on_time = 1000*atoi(strsep(&b, "\n"));
     else if (strcmp(p, "bright") == 0)
-      bright = atoi(strsep(&b, "\n"));
+      cfg.bright = atoi(strsep(&b, "\n"));
     else if (strcmp(p, "dim") == 0)
-      dim = atoi(strsep(&b, "\n"));
+      cfg.dim = atoi(strsep(&b, "\n"));
     p = strsep(&b, "=");
   }
   f.close();
 
+  fade = cfg.bright;
+  analogWrite(TFT_LED, fade);
+
+  tft.println(F("Weather Guy (c)2017"));
   tft.println();
   tft.print(F("ssid: "));
-  tft.println(ssid);
+  tft.println(cfg.ssid);
   tft.print(F("password: "));
-  tft.println(password);
+  tft.println(cfg.password);
   tft.print(F("key: "));
-  tft.println(key);
+  tft.println(cfg.key);
   tft.print(F("station: "));
-  tft.println(station);
+  tft.println(cfg.station);
   tft.print(F("condition...: "));
-  tft.println(conditions_interval);
+  tft.println(cfg.conditions_interval);
   tft.print(F("forecast...: "));
-  tft.println(forecasts_interval);
+  tft.println(cfg.forecasts_interval);
   tft.print(F("display: "));
-  tft.println(on_time);
+  tft.println(cfg.on_time);
   tft.print(F("metric: "));
-  tft.println(metric);
+  tft.println(cfg.metric);
   tft.print(F("bright: "));
-  tft.println(bright);
+  tft.println(cfg.bright);
   tft.print(F("dim: "));
-  tft.println(dim);
+  tft.println(cfg.dim);
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(cfg.ssid, cfg.password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     out.print(F("."));
@@ -120,7 +127,7 @@ void setup() {
 #ifdef DEBUG  
   out.println();
   out.print(F("Connected to "));
-  out.println(ssid);
+  out.println(cfg.ssid);
   out.println(WiFi.localIP());
 #endif
   tft.println();
@@ -152,8 +159,8 @@ void setup() {
   });
   ArduinoOTA.begin();
   
-  last_fetch_conditions = -conditions_interval;
-  last_fetch_forecasts = -forecasts_interval;
+  last_fetch_conditions = -cfg.conditions_interval;
+  last_fetch_forecasts = -cfg.forecasts_interval;
 }
 
 struct Conditions {
@@ -191,7 +198,7 @@ void update_conditions(JsonObject &root, struct Conditions &c) {
   c.epoch = (time_t)atoi(current_observation["observation_epoch"]);
   strncpy(c.icon, current_observation["icon"], sizeof(c.icon));
   strncpy(c.weather, current_observation["weather"], sizeof(c.weather));
-  if (metric) {
+  if (cfg.metric) {
     c.temp = current_observation["temp_c"];
     c.feelslike = atoi(current_observation["feelslike_c"]);
     c.temp_unit = 'C';
@@ -249,7 +256,7 @@ void update_forecasts(JsonObject &root) {
     struct Forecast &f = forecasts[i];
     f.epoch = (time_t)atoi(day["date"]["epoch"]);
     strncpy(f.day, day["date"]["weekday_short"], sizeof(f.day));
-    if (metric) {
+    if (cfg.metric) {
       f.temp_high = atoi(day["high"]["celsius"]);
       f.temp_low = atoi(day["low"]["celsius"]);
       f.max_wind = day["maxwind"]["kph"];
@@ -290,7 +297,7 @@ static int val_len(int b)
 
 static void display_time(time_t &epoch) {
   char buf[32];
-  strftime(buf, sizeof(buf), metric? "%H:%S": "%I:%S%p", localtime(&epoch));
+  strftime(buf, sizeof(buf), cfg.metric? "%H:%S": "%I:%S%p", localtime(&epoch));
   tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
   tft.print(buf);
   strftime(buf, sizeof(buf), "%a %d", localtime(&epoch));
@@ -473,7 +480,7 @@ void update_display(int screen) {
 
 bool connect_and_get(WiFiClient &client, const char *path) {
   if (client.connect(host, 80)) {
-    client.print(String("GET /api/") + key + "/" + path + "/q/" + station
+    client.print(String("GET /api/") + cfg.key + "/" + path + "/q/" + cfg.station
                  + ".json HTTP/1.1\r\n"
                  + "Host: " + host + "\r\n"
                  + "Connection: close\r\n"
@@ -495,13 +502,13 @@ void loop() {
   uint32_t now = millis();
   bool swtch = !digitalRead(SWITCH);
 
-  if (fade == dim) {
+  if (fade == cfg.dim) {
     if (swtch) {
       display_on = now;
-      fade = bright;
+      fade = cfg.bright;
       analogWrite(TFT_LED, fade);
     }
-  } else if (now - display_on > on_time) {
+  } else if (now - display_on > cfg.on_time) {
     analogWrite(TFT_LED, --fade);
     delay(25);
   } else if (swtch && now - display_on > 500) {
@@ -512,7 +519,7 @@ void loop() {
     update_display(screen);
   }
   
-  if (now - last_fetch_conditions > conditions_interval) {
+  if (now - last_fetch_conditions > cfg.conditions_interval) {
 #ifdef DEBUG
     out.println(F("Updating conditions..."));
 #endif
@@ -529,7 +536,7 @@ void loop() {
       out.println(F("Failed to fetch conditions!"));
   }
 
-  if (now - last_fetch_forecasts > forecasts_interval) {
+  if (now - last_fetch_forecasts > cfg.forecasts_interval) {
 #ifdef DEBUG
     out.println(F("Updating forecast..."));
 #endif
