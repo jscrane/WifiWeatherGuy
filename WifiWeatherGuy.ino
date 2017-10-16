@@ -21,6 +21,8 @@ const char host[] = "api.wunderground.com";
 
 TFT_ILI9163C tft = TFT_ILI9163C(CS, DC);
 
+MDNSResponder mdns;
+
 Print &out = Serial;
 #define DEBUG
 
@@ -34,6 +36,7 @@ public:
   char password[33];
   char key[17];
   char station[33];
+  char hostname[17];
   bool metric;
   uint32_t conditions_interval, forecasts_interval;
   uint32_t on_time;
@@ -65,6 +68,8 @@ void config::entry(const char *p, const char *q) {
       cfg.bright = atoi(q);
     else if (strcmp(p, "dim") == 0)
       cfg.dim = atoi(q);
+    else if (strcmp(p, "hostname") == 0)
+      strncpy(cfg.hostname, q, sizeof(cfg.hostname));
 }
 
 extern int bmp_draw(TFT_ILI9163C &tft, const char *filename, uint8_t x, uint8_t y);
@@ -103,6 +108,8 @@ void setup() {
   tft.println(cfg.key);
   tft.print(F("station: "));
   tft.println(cfg.station);
+  tft.print(F("hostname: "));
+  tft.println(cfg.hostname);
   tft.print(F("condition...: "));
   tft.println(cfg.conditions_interval);
   tft.print(F("forecast...: "));
@@ -131,7 +138,10 @@ void setup() {
   tft.println();
   tft.println(WiFi.localIP());
 
-  ArduinoOTA.setHostname("WifiWeatherGuy");
+  if (mdns.begin(cfg.hostname, WiFi.localIP()))
+    out.println("MDNS started");
+  
+  ArduinoOTA.setHostname(cfg.hostname);
   ArduinoOTA.onStart([]() {
 #ifdef DEBUG
     Serial.println("Start");
