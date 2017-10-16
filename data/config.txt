@@ -1,5 +1,6 @@
-ssid=TVC15
-password=
+# comment
+ssid=<your ssid>
+password=<your password>
 key=7ecb9b676eba3283
 station=EIME
 metric=1

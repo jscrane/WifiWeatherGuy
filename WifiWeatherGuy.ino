@@ -7,6 +7,7 @@
 #include <FS.h>
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
+#include "Configuration.h"
 
 const char host[] = "api.wunderground.com";
 
@@ -27,7 +28,8 @@ uint32_t last_fetch_conditions = 0, last_fetch_forecasts = 0;
 uint32_t display_on = 0;
 uint8_t fade;
 
-struct configuration {
+class config: public Configuration {
+public:
   char ssid[33];
   char password[33];
   char key[17];
@@ -36,7 +38,34 @@ struct configuration {
   uint32_t conditions_interval, forecasts_interval;
   uint32_t on_time;
   uint8_t bright, dim;
+
+protected:
+  void entry(const char *k, const char *v);
+
 } cfg;
+
+void config::entry(const char *p, const char *q) {
+    if (strcmp(p, "ssid") == 0)
+      strncpy(cfg.ssid, q, sizeof(cfg.ssid));
+    else if (strcmp(p, "password") == 0)
+      strncpy(cfg.password, q, sizeof(cfg.password));
+    else if (strcmp(p, "key") == 0)
+      strncpy(cfg.key, q, sizeof(cfg.key));
+    else if (strcmp(p, "station") == 0)
+      strncpy(cfg.station, q, sizeof(cfg.station));
+    else if (strcmp(p, "conditions_interval") == 0)
+      cfg.conditions_interval = 1000*atoi(q);
+    else if (strcmp(p, "forecasts_interval") == 0)
+      cfg.forecasts_interval = 1000*atoi(q);
+    else if (strcmp(p, "metric") == 0)
+      cfg.metric = (bool)atoi(q);
+    else if (strcmp(p, "display") == 0)
+      cfg.on_time = 1000*atoi(q);
+    else if (strcmp(p, "bright") == 0)
+      cfg.bright = atoi(q);
+    else if (strcmp(p, "dim") == 0)
+      cfg.dim = atoi(q);
+}
 
 extern int bmp_draw(TFT_ILI9163C &tft, const char *filename, uint8_t x, uint8_t y);
 
@@ -56,41 +85,10 @@ void setup() {
   if (!result)
     return;
 
-  File f = SPIFFS.open("/config.txt", "r");
-  if (!f) {
-    out.print(F("file.open!"));
+  if (!cfg.read_file("/config.txt")) {
+    out.print(F("config!"));
     return;
   }
-  char buf[512];
-  f.readBytes(buf, sizeof(buf));
-  char *b = buf, *p = strsep(&b, "=");
-  while (p) {
-#ifdef DEBUG
-    out.println(p);
-#endif
-    if (strcmp(p, "ssid") == 0)
-      strncpy(cfg.ssid, strsep(&b, "\n"), sizeof(cfg.ssid));
-    else if (strcmp(p, "password") == 0)
-      strncpy(cfg.password, strsep(&b, "\n"), sizeof(cfg.password));
-    else if (strcmp(p, "key") == 0)
-      strncpy(cfg.key, strsep(&b, "\n"), sizeof(cfg.key));
-    else if (strcmp(p, "station") == 0)
-      strncpy(cfg.station, strsep(&b, "\n"), sizeof(cfg.station));
-    else if (strcmp(p, "conditions_interval") == 0)
-      cfg.conditions_interval = 1000*atoi(strsep(&b, "\n"));
-    else if (strcmp(p, "forecasts_interval") == 0)
-      cfg.forecasts_interval = 1000*atoi(strsep(&b, "\n"));
-    else if (strcmp(p, "metric") == 0)
-      cfg.metric = (bool)atoi(strsep(&b, "\n"));
-    else if (strcmp(p, "display") == 0)
-      cfg.on_time = 1000*atoi(strsep(&b, "\n"));
-    else if (strcmp(p, "bright") == 0)
-      cfg.bright = atoi(strsep(&b, "\n"));
-    else if (strcmp(p, "dim") == 0)
-      cfg.dim = atoi(strsep(&b, "\n"));
-    p = strsep(&b, "=");
-  }
-  f.close();
 
   fade = cfg.bright;
   analogWrite(TFT_LED, fade);
