@@ -1,6 +1,6 @@
 # comment
 ssid=MAGNET-52D0CC
-password=xxxxxxxxxx
+password=C3C45FFDB0
 key=7ecb9b676eba3283
 station=EIME
 hostname=WifiWeatherGuy
