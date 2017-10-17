@@ -1,1 +1,2 @@
-- Webserver for updating configuration
+- Webserver for configuration and firmware update
+- About screen with switch for IP address and mDNS

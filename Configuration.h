@@ -5,8 +5,8 @@ class Configuration {
 public:
   bool read_file(const char *filename);
 
-  virtual bool value(const char *key, char *value, int n) { return false; }
-  virtual void entry(const char *key, const char *value) = 0;
+protected:  
+  virtual void entry(const char *k, const char *v) = 0;
 };
 
 #endif
