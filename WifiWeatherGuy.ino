@@ -2,11 +2,12 @@
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <TFT_ILI9163C.h>
-#include <ESP8266WiFi.h>
 #include <time.h>
 #include <FS.h>
+#include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
+#include <ESP8266WebServer.h>
 #include "Configuration.h"
 
 const char host[] = "api.wunderground.com";
@@ -22,6 +23,7 @@ const char host[] = "api.wunderground.com";
 TFT_ILI9163C tft = TFT_ILI9163C(CS, DC);
 
 MDNSResponder mdns;
+ESP8266WebServer server(80);
 
 Print &out = Serial;
 #define DEBUG
@@ -42,37 +44,92 @@ public:
   uint32_t on_time;
   uint8_t bright, dim;
 
-protected:
-  void entry(const char *k, const char *v);
+  void entry(const char *key, const char *value);
+  bool value(const char *key, char *buf, int n);
 
 } cfg;
 
 void config::entry(const char *p, const char *q) {
-    if (strcmp(p, "ssid") == 0)
-      strncpy(cfg.ssid, q, sizeof(cfg.ssid));
-    else if (strcmp(p, "password") == 0)
-      strncpy(cfg.password, q, sizeof(cfg.password));
-    else if (strcmp(p, "key") == 0)
-      strncpy(cfg.key, q, sizeof(cfg.key));
-    else if (strcmp(p, "station") == 0)
-      strncpy(cfg.station, q, sizeof(cfg.station));
-    else if (strcmp(p, "conditions_interval") == 0)
-      cfg.conditions_interval = 1000*atoi(q);
-    else if (strcmp(p, "forecasts_interval") == 0)
-      cfg.forecasts_interval = 1000*atoi(q);
-    else if (strcmp(p, "metric") == 0)
-      cfg.metric = (bool)atoi(q);
-    else if (strcmp(p, "display") == 0)
-      cfg.on_time = 1000*atoi(q);
-    else if (strcmp(p, "bright") == 0)
-      cfg.bright = atoi(q);
-    else if (strcmp(p, "dim") == 0)
-      cfg.dim = atoi(q);
-    else if (strcmp(p, "hostname") == 0)
-      strncpy(cfg.hostname, q, sizeof(cfg.hostname));
+  if (strcmp(p, "ssid") == 0)
+    strncpy(ssid, q, sizeof(ssid));
+  else if (strcmp(p, "password") == 0)
+    strncpy(password, q, sizeof(password));
+  else if (strcmp(p, "key") == 0)
+    strncpy(key, q, sizeof(key));
+  else if (strcmp(p, "station") == 0)
+    strncpy(station, q, sizeof(station));
+  else if (strcmp(p, "conditions_interval") == 0)
+    conditions_interval = 1000*atoi(q);
+  else if (strcmp(p, "forecasts_interval") == 0)
+    forecasts_interval = 1000*atoi(q);
+  else if (strcmp(p, "metric") == 0)
+    metric = (bool)atoi(q);
+  else if (strcmp(p, "display") == 0)
+    on_time = 1000*atoi(q);
+  else if (strcmp(p, "bright") == 0)
+    cfg.bright = atoi(q);
+  else if (strcmp(p, "dim") == 0)
+    dim = atoi(q);
+  else if (strcmp(p, "hostname") == 0)
+    strncpy(hostname, q, sizeof(hostname));
+}
+
+bool config::value(const char *p, char *buf, int n) {
+  if (strcmp(p, "ssid") == 0)
+    strncpy(buf, ssid, n);
+  else if (strcmp(p, "password") == 0)
+    strncpy(buf, password, n);
+  else if (strcmp(p, "key") == 0)
+    strncpy(buf, key, n);
+  else if (strcmp(p, "station") == 0)
+    strncpy(buf, station, n);
+  else if (strcmp(p, "conditions_interval") == 0)
+    itoa(conditions_interval / 1000, buf, 10);
+  else if (strcmp(p, "forecasts_interval") == 0)
+    itoa(forecasts_interval / 1000, buf, 10);
+  else if (strcmp(p, "metric") == 0)
+    itoa(metric, buf, 10);
+  else if (strcmp(p, "display") == 0)
+    itoa(on_time / 1000, buf, 10);
+  else if (strcmp(p, "bright") == 0)
+    itoa(bright, buf, 10);
+  else if (strcmp(p, "dim") == 0)
+    itoa(dim, buf, 10);
+  else if (strcmp(p, "hostname") == 0)
+    strncpy(buf, hostname, n);
+  else
+    return false;
+  return true;
 }
 
 extern int bmp_draw(TFT_ILI9163C &tft, const char *filename, uint8_t x, uint8_t y);
+
+void filter(Stream &input, Stream &output) {
+  char buf[256];
+  while (input.available() > 0) {
+    size_t n = input.readBytesUntil('$', buf, sizeof(buf));
+    output.write(buf, n);
+    char c = input.read();
+    if (c == '{') {
+      n = input.readBytesUntil('}', buf, sizeof(buf));
+      if (n > 0) {
+        buf[n] = 0;
+        char val[32];
+        if (cfg.value(buf, val, sizeof(val)))
+          output.write(val, strlen(val));
+      }
+    } else if (c != 0)
+      output.write(c);
+  }
+}
+
+void fileFilter(const char *filename, Stream &output) {
+  File file = SPIFFS.open(filename, "r");
+  if (file) {
+    filter(file, output);
+    file.close();
+  }
+}
 
 void setup() {
 
@@ -85,10 +142,11 @@ void setup() {
   pinMode(SWITCH, INPUT_PULLUP);
 
   bool result = SPIFFS.begin();
-  out.print("SPIFFS: ");
-  out.println(result);
-  if (!result)
+  if (!result) {
+    out.print("SPIFFS: ");
+    out.println(result);
     return;
+  }
 
   if (!cfg.read_file("/config.txt")) {
     out.print(F("config!"));
@@ -169,6 +227,14 @@ void setup() {
   
   last_fetch_conditions = -cfg.conditions_interval;
   last_fetch_forecasts = -cfg.forecasts_interval;
+
+  server.on("/", []() {
+    server.setContentLength(2048);
+    server.send(200, "text/html", "");
+    WiFiClient client = server.client();
+    fileFilter("/index.html", client);
+  });
+  server.begin();
 }
 
 struct Conditions {
@@ -506,6 +572,7 @@ void loop() {
   static int screen = 0;
 
   ArduinoOTA.handle();
+  server.handleClient();
 
   uint32_t now = millis();
   bool swtch = !digitalRead(SWITCH);
