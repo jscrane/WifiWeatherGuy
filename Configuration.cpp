@@ -1,4 +1,5 @@
 #include <FS.h>
+#include <ArduinoJson.h>
 #include "Configuration.h"
 
 bool Configuration::read_file(const char *filename) {
@@ -8,16 +9,9 @@ bool Configuration::read_file(const char *filename) {
 
   char buf[512];
   f.readBytes(buf, sizeof(buf));
-  char *b = buf;
-  for (;;) {
-    const char *p = strsep(&b, "=\n");
-    if (!p)
-      break;
-    if (*p != '#') {
-      const char *q = strsep(&b, "\n");
-      entry(p, q);
-    }
-  }
+  DynamicJsonBuffer json(JSON_OBJECT_SIZE(11) + 210);
+  JsonObject &root = json.parseObject(buf);
+  configure(root);
   f.close();
   return true;
 }

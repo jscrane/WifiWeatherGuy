@@ -44,92 +44,24 @@ public:
   uint32_t on_time;
   uint8_t bright, dim;
 
-  void entry(const char *key, const char *value);
-  bool value(const char *key, char *buf, int n);
-
+  void configure(JsonObject &o);
 } cfg;
 
-void config::entry(const char *p, const char *q) {
-  if (strcmp(p, "ssid") == 0)
-    strncpy(ssid, q, sizeof(ssid));
-  else if (strcmp(p, "password") == 0)
-    strncpy(password, q, sizeof(password));
-  else if (strcmp(p, "key") == 0)
-    strncpy(key, q, sizeof(key));
-  else if (strcmp(p, "station") == 0)
-    strncpy(station, q, sizeof(station));
-  else if (strcmp(p, "conditions_interval") == 0)
-    conditions_interval = 1000*atoi(q);
-  else if (strcmp(p, "forecasts_interval") == 0)
-    forecasts_interval = 1000*atoi(q);
-  else if (strcmp(p, "metric") == 0)
-    metric = (bool)atoi(q);
-  else if (strcmp(p, "display") == 0)
-    on_time = 1000*atoi(q);
-  else if (strcmp(p, "bright") == 0)
-    cfg.bright = atoi(q);
-  else if (strcmp(p, "dim") == 0)
-    dim = atoi(q);
-  else if (strcmp(p, "hostname") == 0)
-    strncpy(hostname, q, sizeof(hostname));
-}
-
-bool config::value(const char *p, char *buf, int n) {
-  if (strcmp(p, "ssid") == 0)
-    strncpy(buf, ssid, n);
-  else if (strcmp(p, "password") == 0)
-    strncpy(buf, password, n);
-  else if (strcmp(p, "key") == 0)
-    strncpy(buf, key, n);
-  else if (strcmp(p, "station") == 0)
-    strncpy(buf, station, n);
-  else if (strcmp(p, "conditions_interval") == 0)
-    itoa(conditions_interval / 1000, buf, 10);
-  else if (strcmp(p, "forecasts_interval") == 0)
-    itoa(forecasts_interval / 1000, buf, 10);
-  else if (strcmp(p, "metric") == 0)
-    itoa(metric, buf, 10);
-  else if (strcmp(p, "display") == 0)
-    itoa(on_time / 1000, buf, 10);
-  else if (strcmp(p, "bright") == 0)
-    itoa(bright, buf, 10);
-  else if (strcmp(p, "dim") == 0)
-    itoa(dim, buf, 10);
-  else if (strcmp(p, "hostname") == 0)
-    strncpy(buf, hostname, n);
-  else
-    return false;
-  return true;
+void config::configure(JsonObject &o) {
+  strncpy(ssid, o["ssid"], sizeof(ssid));
+  strncpy(password, o["password"], sizeof(password));
+  strncpy(key, o["key"], sizeof(key));
+  strncpy(station, o["station"], sizeof(station));
+  conditions_interval = 1000 * (int)o["conditions_interval"];
+  forecasts_interval = 1000 * (int)o["forecasts_interval"];
+  metric = (bool)o["metric"];
+  on_time = 1000 * (int)o["display"];
+  bright = o["bright"];
+  dim = o["dim"];
+  strncpy(hostname, o["hostname"], sizeof(hostname));
 }
 
 extern int bmp_draw(TFT_ILI9163C &tft, const char *filename, uint8_t x, uint8_t y);
-
-void filter(Stream &input, Stream &output) {
-  char buf[256];
-  while (input.available() > 0) {
-    size_t n = input.readBytesUntil('$', buf, sizeof(buf));
-    output.write(buf, n);
-    char c = input.read();
-    if (c == '{') {
-      n = input.readBytesUntil('}', buf, sizeof(buf));
-      if (n > 0) {
-        buf[n] = 0;
-        char val[32];
-        if (cfg.value(buf, val, sizeof(val)))
-          output.write(val, strlen(val));
-      }
-    } else if (c != 0)
-      output.write(c);
-  }
-}
-
-void fileFilter(const char *filename, Stream &output) {
-  File file = SPIFFS.open(filename, "r");
-  if (file) {
-    filter(file, output);
-    file.close();
-  }
-}
 
 void setup() {
 
@@ -148,7 +80,7 @@ void setup() {
     return;
   }
 
-  if (!cfg.read_file("/config.txt")) {
+  if (!cfg.read_file("/config.json")) {
     out.print(F("config!"));
     return;
   }
@@ -229,10 +161,24 @@ void setup() {
   last_fetch_forecasts = -cfg.forecasts_interval;
 
   server.on("/", []() {
-    server.setContentLength(2048);
-    server.send(200, "text/html", "");
-    WiFiClient client = server.client();
-    fileFilter("/index.html", client);
+    File f = SPIFFS.open("/index.html", "r");
+    server.streamFile(f, "text/html");
+    f.close();
+  });
+  server.on("/config", HTTP_GET, []() {
+    File f = SPIFFS.open("/config.json", "r");
+    server.streamFile(f, "text/json");
+    f.close();
+  });
+  server.on("/config", HTTP_POST, []() {
+    if (server.hasArg("plain")) {
+      String body = server.arg("plain");
+      Serial.print(body);
+      File f = SPIFFS.open("/config.json", "w");
+      f.print(body);
+      f.close();
+    } else
+      server.send(400, "text/plain", "No body!");
   });
   server.begin();
 }

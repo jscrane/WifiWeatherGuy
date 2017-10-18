@@ -1,0 +1,13 @@
+{
+ "ssid": "MAGNET-52D0CC",
+ "password": "C3C45FFDB0",
+ "key": "7ecb9b676eba3283",
+ "station": "EIME",
+ "hostname": "WifiWeatherGuy",
+ "metric": 1,
+ "conditions_interval": 1200,
+ "forecasts_interval": 14400,
+ "display": 30,
+ "bright": 255,
+ "dim": 20
+}
