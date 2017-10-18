@@ -1,0 +1,73 @@
+<html>
+<head>
+<title>Configuration</title>
+<script src="/js/transparency.min.js"></script>
+<script>
+function load_config() {
+  fetch('/config').then(function(response) {
+    if (response.status !== 200) {
+      console.log('Error: '+response.status);
+      return;
+    }
+    response.json().then(function(data) {
+      Transparency.render(document.getElementById('container'), data);
+    });
+  }).catch(function(err) {
+    console.log('Fetch error :-S', err);
+  });
+}
+</script>
+</head>
+<body onload="load_config()">
+
+<h1>Configuration</h1>
+<table>
+<tbody id="container">
+<tr>
+<td>SSID:</td>
+<td id="ssid"></td>
+</tr>
+<tr>
+<td>Password:</td>
+<td id="password"></td>
+</tr>
+<tr>
+<td>Key:</td>
+<td id="key"></td>
+</tr>
+<tr>
+<td>Station:</td>
+<td id="station"></td>
+</tr>
+<tr>
+<td>Hostname:</td>
+<td id="hostname"></td>
+</tr>
+<tr>
+<td>Metric:</td>
+<td id="metric"></td>
+</tr>
+<tr>
+<td>Update Conditions:</td>
+<td id="conditions_interval"></td>
+</tr>
+<tr>
+<td>Update Forecasts:</td>
+<td id="forecasts_interval"></td>
+</tr>
+<tr>
+<td>Display On:</td>
+<td id="display"></td>
+</tr>
+<tr>
+<td>Brightness:</td>
+<td id="bright"></td>
+</tr>
+<tr>
+<td>Dim:</td>
+<td id="dim"></td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

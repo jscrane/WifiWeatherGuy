@@ -160,16 +160,6 @@ void setup() {
   last_fetch_conditions = -cfg.conditions_interval;
   last_fetch_forecasts = -cfg.forecasts_interval;
 
-  server.on("/", []() {
-    File f = SPIFFS.open("/index.html", "r");
-    server.streamFile(f, "text/html");
-    f.close();
-  });
-  server.on("/config", HTTP_GET, []() {
-    File f = SPIFFS.open("/config.json", "r");
-    server.streamFile(f, "text/json");
-    f.close();
-  });
   server.on("/config", HTTP_POST, []() {
     if (server.hasArg("plain")) {
       String body = server.arg("plain");
@@ -180,6 +170,10 @@ void setup() {
     } else
       server.send(400, "text/plain", "No body!");
   });
+  server.serveStatic("/", SPIFFS, "/index.html");
+  server.serveStatic("/config", SPIFFS, "/config.json");
+  server.serveStatic("/js/transparency.min.js", SPIFFS, "/transparency.min.js");
+
   server.begin();
 }
 
