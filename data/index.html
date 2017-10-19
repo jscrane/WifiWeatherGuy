@@ -20,15 +20,18 @@ function save_config() {
   var form = document.getElementById('config');
   const data = [].reduce.call(form.elements, (data, element) => {
     if (element.id && element.value) {
-      data[element.id] = element.value;
+      if (element.type == 'checkbox') {
+        data[element.id] = (element.checked? 1: 0);
+      } else {
+        data[element.id] = element.value;
+      }
     }
     return data;
   }, {});
-  text = JSON.stringify(data, null, "  ");
   var xhr = new XMLHttpRequest();
   xhr.open("POST", '/config', true);
   xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.send(text);
+  xhr.send(JSON.stringify(data, null, "  "));
 }
 </script>
 </head>
@@ -60,7 +63,7 @@ function save_config() {
   </tr>
   <tr>
     <td>Metric:</td>
-    <td><input type="number" min="0" max="1" id="metric"></td>
+    <td><input type="checkbox" id="metric"></td>
   </tr>
   <tr>
     <td>Update Conditions:</td>

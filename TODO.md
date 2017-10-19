@@ -1,2 +1,2 @@
 - restart when update config
-- checkbox for metric on webpage
+- blog post ("client makes right")
