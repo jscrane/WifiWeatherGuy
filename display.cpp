@@ -1,7 +1,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <FS.h>
+#include <time.h>
 #include <TFT_ILI9163C.h>
+#include "display.h"
 
 extern Print &out;
 
@@ -21,7 +23,7 @@ static uint32_t read32(File &f) {
 }
 
 // from Adafruit's spitftbitmap ST7735 example
-int bmp_draw(TFT_ILI9163C &tft, const char *filename, uint8_t x, uint8_t y) {
+int display_bmp(const char *filename, uint8_t x, uint8_t y) {
   int      bmpWidth, bmpHeight;   // W+H in pixels
   uint8_t  bmpDepth;              // Bit depth (currently must be 24)
   uint32_t bmpImageoffset;        // Start of image data in file
@@ -162,5 +164,81 @@ int bmp_draw(TFT_ILI9163C &tft, const char *filename, uint8_t x, uint8_t y) {
   out.println(F(" ms"));
 #endif
   return 0;
+}
+
+int centre_text(const char *s, int x, int size) {
+  return x - (strlen(s) * size * 6) / 2;
+}
+
+int right(int n, int x, int size) {
+  return x - n * size * 6;
+}
+
+int val_len(int b) {
+  if (b >= 1000) return 4;
+  if (b >= 100) return 3;
+  if (b >= 10) return 2;
+  if (b >= 0) return 1;
+  if (b > -10) return 2;
+  return 3;
+}
+
+void display_time(time_t &epoch, bool metric) {
+  char buf[32];
+  strftime(buf, sizeof(buf), metric? "%H:%S": "%I:%S%p", localtime(&epoch));
+  tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
+  tft.print(buf);
+  strftime(buf, sizeof(buf), "%a %d", localtime(&epoch));
+  tft.setCursor(centre_text(buf, tft.width()/2, 1), 118);
+  tft.print(buf);
+}
+
+void display_wind(int wind_degrees, int wind_speed) {
+    // http://www.iquilezles.org/www/articles/sincos/sincos.htm
+  int rad = tft.width()/3, cx = tft.width()/2, cy = 68;
+  const float a = 0.999847695, b = 0.017452406;
+  // wind dir is azimuthal angle with N at 0
+  float sin = 1.0, cos = 0.0;
+  for (uint16_t i = 0; i < wind_degrees; i++) {
+    const float ns = a*sin + b*cos;
+    const float nc = a*cos - b*sin;
+    cos = nc;
+    sin = ns;
+  }
+  // wind dir rotates clockwise so compensate
+  int ex = cx-rad*cos, ey = cy-rad*sin;
+  tft.fillCircle(ex, ey, 3, BLACK);
+  tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/50, ey+wind_speed*(cy-ey)/50, BLACK);
+}
+
+void display_wind_speed(int wind_speed, const char *wind_dir, const char *wind_unit) {
+  tft.setTextSize(2);
+  tft.setCursor(1, 1);
+  tft.print(wind_speed);
+  tft.setTextSize(1);
+  tft.print(wind_unit);
+  tft.setCursor(1, 17);
+  tft.print(wind_dir);
+}
+
+void display_temperature(int temp, int temp_min, char temp_unit) {
+  tft.setTextSize(2);
+  tft.setCursor(1, tft.height() - 16);
+  tft.print(temp);
+  tft.setTextSize(1);
+  tft.print(temp_unit);
+  if (temp != temp_min) {
+    tft.setCursor(1, tft.height() - 24);
+    tft.print(temp_min);
+  }
+}
+
+void display_humidity(int humidity) {
+  tft.setTextSize(2);
+  tft.setCursor(right(val_len(humidity), tft.width(), 2) - 6, tft.height() - 16);
+  tft.print(humidity);
+  tft.setTextSize(1);
+  tft.setCursor(tft.width() - 6, tft.height() - 16);
+  tft.print('%');
 }
 

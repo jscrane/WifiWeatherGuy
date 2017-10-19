@@ -2,13 +2,13 @@
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <TFT_ILI9163C.h>
-#include <time.h>
 #include <FS.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ArduinoOTA.h>
 #include <ESP8266WebServer.h>
 #include "Configuration.h"
+#include "display.h"
 
 const char host[] = "api.wunderground.com";
 
@@ -60,8 +60,6 @@ void config::configure(JsonObject &o) {
   dim = o["dim"];
   strncpy(hostname, o["hostname"], sizeof(hostname));
 }
-
-extern int bmp_draw(TFT_ILI9163C &tft, const char *filename, uint8_t x, uint8_t y);
 
 void setup() {
 
@@ -167,6 +165,7 @@ void setup() {
       File f = SPIFFS.open("/config.json", "w");
       f.print(body);
       f.close();
+      // ESP.restart();
     } else
       server.send(400, "text/plain", "No body!");
   });
@@ -289,85 +288,6 @@ void update_forecasts(JsonObject &root) {
   }
 }
 
-static int centre_text(const char *s, int x, int size)
-{
-  return x - (strlen(s) * size * 6) / 2;
-}
-
-static int right(int n, int x, int size)
-{
-  return x - n * size * 6;
-}
-
-static int val_len(int b)
-{
-  if (b >= 1000) return 4;
-  if (b >= 100) return 3;
-  if (b >= 10) return 2;
-  if (b >= 0) return 1;
-  if (b > -10) return 2;
-  return 3;
-}
-
-static void display_time(time_t &epoch) {
-  char buf[32];
-  strftime(buf, sizeof(buf), cfg.metric? "%H:%S": "%I:%S%p", localtime(&epoch));
-  tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
-  tft.print(buf);
-  strftime(buf, sizeof(buf), "%a %d", localtime(&epoch));
-  tft.setCursor(centre_text(buf, tft.width()/2, 1), 118);
-  tft.print(buf);
-}
-
-static void display_wind(int wind_degrees, int wind_speed) {
-    // http://www.iquilezles.org/www/articles/sincos/sincos.htm
-  int rad = tft.width()/3, cx = tft.width()/2, cy = 68;
-  const float a = 0.999847695, b = 0.017452406;
-  // wind dir is azimuthal angle with N at 0
-  float sin = 1.0, cos = 0.0;
-  for (uint16_t i = 0; i < wind_degrees; i++) {
-    const float ns = a*sin + b*cos;
-    const float nc = a*cos - b*sin;
-    cos = nc;
-    sin = ns;
-  }
-  // wind dir rotates clockwise so compensate
-  int ex = cx-rad*cos, ey = cy-rad*sin;
-  tft.fillCircle(ex, ey, 3, BLACK);
-  tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/50, ey+wind_speed*(cy-ey)/50, BLACK);
-}
-
-static void display_wind_speed(int wind_speed, const char *wind_dir, const char *wind_unit) {
-  tft.setTextSize(2);
-  tft.setCursor(1, 1);
-  tft.print(wind_speed);
-  tft.setTextSize(1);
-  tft.print(wind_unit);
-  tft.setCursor(1, 17);
-  tft.print(wind_dir);
-}
-
-static void display_temperature(int temp, int temp_min, char temp_unit) {
-  tft.setTextSize(2);
-  tft.setCursor(1, tft.height() - 16);
-  tft.print(temp);
-  tft.setTextSize(1);
-  tft.print(temp_unit);
-  if (temp != temp_min) {
-    tft.setCursor(1, tft.height() - 24);
-    tft.print(temp_min);
-  }
-}
-
-static void display_humidity(int humidity) {
-  tft.setTextSize(2);
-  tft.setCursor(right(val_len(humidity), tft.width(), 2) - 6, tft.height() - 16);
-  tft.print(humidity);
-  tft.setTextSize(1);
-  tft.setCursor(tft.width() - 6, tft.height() - 16);
-  tft.print('%');
-}
-
 void display_weather(struct Conditions &c) {
 
   tft.fillScreen(WHITE);
@@ -396,9 +316,9 @@ void display_weather(struct Conditions &c) {
   tft.print(c.city);
   tft.setCursor(centre_text(c.weather, tft.width()/2, 1), 34);
   tft.print(c.weather);
-  bmp_draw(tft, c.icon, tft.width()/2 - 25, 42);
+  display_bmp(c.icon, tft.width()/2 - 25, 42);
 
-  display_time(c.epoch);
+  display_time(c.epoch, cfg.metric);
 
   display_wind(c.wind_degrees, c.wind);
 }
@@ -442,12 +362,12 @@ void display_astronomy(struct Conditions &c) {
   char buf[32];
   strcpy(buf, "moon");
   strcat(buf, c.age_of_moon);
-  bmp_draw(tft, buf, tft.width()/2 - 25, 42);
+  display_bmp(buf, tft.width()/2 - 25, 42);
 
   tft.setCursor(centre_text(c.moon_phase, tft.width()/2, 1), 92);
   tft.print(c.moon_phase);
 
-  display_time(c.epoch);
+  display_time(c.epoch, cfg.metric);
 }
 
 void display_forecast(struct Forecast &f) {
@@ -468,9 +388,9 @@ void display_forecast(struct Forecast &f) {
   tft.setTextSize(1);
   tft.setCursor(centre_text(f.conditions, tft.width()/2, 1), 34);
   tft.print(f.conditions);
-  bmp_draw(tft, f.icon, tft.width()/2 - 25, 42);
+  display_bmp(f.icon, tft.width()/2 - 25, 42);
 
-  display_time(f.epoch);
+  display_time(f.epoch, cfg.metric);
 
   display_wind(f.wind_degrees, f.ave_wind);
 }
