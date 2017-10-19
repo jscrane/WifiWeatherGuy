@@ -21,53 +21,58 @@ function load_config() {
 <body onload="load_config()">
 
 <h1>Configuration</h1>
+<form action="/foo">
 <table>
 <tbody id="container">
-<tr>
-<td>SSID:</td>
-<td id="ssid"></td>
-</tr>
-<tr>
-<td>Password:</td>
-<td id="password"></td>
-</tr>
-<tr>
-<td>Key:</td>
-<td id="key"></td>
-</tr>
-<tr>
-<td>Station:</td>
-<td id="station"></td>
-</tr>
-<tr>
-<td>Hostname:</td>
-<td id="hostname"></td>
-</tr>
-<tr>
-<td>Metric:</td>
-<td id="metric"></td>
-</tr>
-<tr>
-<td>Update Conditions:</td>
-<td id="conditions_interval"></td>
-</tr>
-<tr>
-<td>Update Forecasts:</td>
-<td id="forecasts_interval"></td>
-</tr>
-<tr>
-<td>Display On:</td>
-<td id="display"></td>
-</tr>
-<tr>
-<td>Brightness:</td>
-<td id="bright"></td>
-</tr>
-<tr>
-<td>Dim:</td>
-<td id="dim"></td>
-</tr>
+  <tr>
+    <td>SSID:</td>
+    <td><input type="text" id="ssid"></td>
+  </tr>
+  <tr>
+    <td>Password:</td>
+    <td><input type="text" id="password"></td>
+  </tr>
+  <tr>
+    <td>Key:</td>
+    <td><input type="text" id="key"></td>
+  </tr>
+  <tr>
+    <td>Station:</td>
+    <td><input type="text" id="station"></td>
+  </tr>
+  <tr>
+    <td>Hostname:</td>
+    <td><input type="text" id="hostname"></td>
+  </tr>
+  <tr>
+    <td>Metric:</td>
+    <td><input type="text" id="metric"></td>
+  </tr>
+  <tr>
+    <td>Update Conditions:</td>
+    <td><input type="text" id="conditions_interval"></td>
+  </tr>
+  <tr>
+    <td>Update Forecasts:</td>
+    <td><input type="text" id="forecasts_interval"></td>
+  </tr>
+  <tr>
+    <td>Display On:</td>
+    <td><input type="text" id="display"></td>
+  </tr>
+  <tr>
+    <td>Brightness:</td>
+    <td><input type="text" id="bright"></td>
+  </tr>
+  <tr>
+    <td>Dim:</td>
+    <td><input type="text" id="dim"></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><button type="submit">Update</button></td>
+  </tr>
 </tbody>
 </table>
+</form>
 </body>
 </html>
