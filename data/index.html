@@ -16,12 +16,26 @@ function load_config() {
     console.log('Fetch error :-S', err);
   });
 }
+function save_config() {
+  var form = document.getElementById('config');
+  const data = [].reduce.call(form.elements, (data, element) => {
+    if (element.id && element.value) {
+      data[element.id] = element.value;
+    }
+    return data;
+  }, {});
+  text = JSON.stringify(data, null, "  ");
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", '/config', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.send(text);
+}
 </script>
 </head>
 <body onload="load_config()">
 
 <h1>Configuration</h1>
-<form action="/foo">
+<form id="config">
 <table>
 <tbody id="container">
   <tr>
@@ -46,30 +60,32 @@ function load_config() {
   </tr>
   <tr>
     <td>Metric:</td>
-    <td><input type="text" id="metric"></td>
+    <td><input type="number" min="0" max="1" id="metric"></td>
   </tr>
   <tr>
     <td>Update Conditions:</td>
-    <td><input type="text" id="conditions_interval"></td>
+    <td><input type="number" min=0 id="conditions_interval"></td>
   </tr>
   <tr>
     <td>Update Forecasts:</td>
-    <td><input type="text" id="forecasts_interval"></td>
+    <td><input type="number" min=0 id="forecasts_interval"></td>
   </tr>
   <tr>
     <td>Display On:</td>
-    <td><input type="text" id="display"></td>
+    <td><input type="number" min=0 id="display"></td>
   </tr>
   <tr>
     <td>Brightness:</td>
-    <td><input type="text" id="bright"></td>
+    <td><input type="number" min="0" max="255" id="bright"></td>
   </tr>
   <tr>
     <td>Dim:</td>
-    <td><input type="text" id="dim"></td>
+    <td><input type="number" min="0" max="255" id="dim"></td>
   </tr>
   <tr>
-    <td colspan="2" align="center"><button type="submit">Update</button></td>
+    <td colspan="2" align="center">
+      <button type="submit" onclick="save_config()">Update</button>
+    </td>
   </tr>
 </tbody>
 </table>

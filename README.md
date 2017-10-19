@@ -24,3 +24,5 @@ The weather icons must be 24-bit bitmaps; convert from GIF as follows:
 
     % convert foo.gif -type truecolor foo.bmp 
 
+## Credits
+- Javascript [transparency](https://github.com/leonidas/transparency)
