@@ -1,2 +1,3 @@
 - restart when update config
 - blog post ("client makes right")
+- replace ArduinoOTA with firmware upgrade form
