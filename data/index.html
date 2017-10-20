@@ -10,15 +10,15 @@ function load_config() {
       return;
     }
     response.json().then(function(data) {
-      Transparency.render(document.getElementById('container'), data);
+      Transparency.render(document.getElementById('config'), data);
     });
   }).catch(function(err) {
     console.log('Fetch error :-S', err);
   });
 }
 function save_config() {
-  var form = document.getElementById('config');
-  const data = [].reduce.call(form.elements, (data, element) => {
+  form = document.getElementById('config');
+  data = [].reduce.call(form.elements, (data, element) => {
     if (element.id && element.value) {
       if (element.type == 'checkbox') {
         data[element.id] = (element.checked? 1: 0);
@@ -28,7 +28,7 @@ function save_config() {
     }
     return data;
   }, {});
-  var xhr = new XMLHttpRequest();
+  xhr = new XMLHttpRequest();
   xhr.open("POST", '/config', true);
   xhr.setRequestHeader('Content-Type', 'application/json');
   xhr.send(JSON.stringify(data, null, "  "));
@@ -40,7 +40,6 @@ function save_config() {
 <h1>Configuration</h1>
 <form id="config">
 <table>
-<tbody id="container">
   <tr>
     <td>SSID:</td>
     <td><input type="text" id="ssid"></td>
@@ -90,7 +89,6 @@ function save_config() {
       <button type="submit" onclick="save_config()">Update</button>
     </td>
   </tr>
-</tbody>
 </table>
 </form>
 </body>
