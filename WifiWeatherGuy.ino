@@ -112,6 +112,7 @@ void setup() {
   tft.println(cfg.dim);
 
   WiFi.mode(WIFI_STA);
+  WiFi.hostname(cfg.hostname);
   WiFi.begin(cfg.ssid, cfg.password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -126,8 +127,10 @@ void setup() {
   tft.println();
   tft.println(WiFi.localIP());
 
-  if (mdns.begin(cfg.hostname, WiFi.localIP()))
+  if (mdns.begin(cfg.hostname, WiFi.localIP())) {
     out.println("MDNS started");
+    mdns.addService("http", "tcp", 80);
+  }
   
   ArduinoOTA.setHostname(cfg.hostname);
   ArduinoOTA.onStart([]() {
@@ -161,7 +164,6 @@ void setup() {
   server.on("/config", HTTP_POST, []() {
     if (server.hasArg("plain")) {
       String body = server.arg("plain");
-      Serial.print(body);
       File f = SPIFFS.open("/config.json", "w");
       f.print(body);
       f.close();
@@ -433,6 +435,7 @@ void loop() {
 
   ArduinoOTA.handle();
   server.handleClient();
+  mdns.update();
 
   uint32_t now = millis();
   bool swtch = !digitalRead(SWITCH);
