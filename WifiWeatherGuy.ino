@@ -170,7 +170,7 @@ struct Conditions {
   int atmos_pressure;
   const char *pres_unit;
   int pressure_trend;
-  char wind_dir[6];
+  char wind_dir[10];
   char sunrise_hour[3];
   char sunrise_minute[3];
   char sunset_hour[3];
