@@ -5,8 +5,9 @@
 #include <FS.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
-#include <ArduinoOTA.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266HTTPUpdateServer.h>
+
 #include "Configuration.h"
 #include "display.h"
 
@@ -24,6 +25,7 @@ TFT_ILI9163C tft = TFT_ILI9163C(CS, DC);
 
 MDNSResponder mdns;
 ESP8266WebServer server(80);
+ESP8266HTTPUpdateServer httpUpdater;
 
 Print &out = Serial;
 #define DEBUG
@@ -134,33 +136,7 @@ void setup() {
     mdns.addService("http", "tcp", 80);
   } else
     out.println("Error starting MDNS");
-  
-  ArduinoOTA.setHostname(cfg.hostname);
-  ArduinoOTA.onStart([]() {
-#ifdef DEBUG
-    Serial.println("Start");
-#endif
-  });
-  ArduinoOTA.onEnd([]() {
-#ifdef DEBUG
-    Serial.println("\nEnd");
-#endif
-  });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-#ifdef DEBUG
-    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-#endif
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-    else if (error == OTA_END_ERROR) Serial.println("End Failed");
-  });
-  ArduinoOTA.begin();
-  
+
   last_fetch_conditions = -cfg.conditions_interval;
   last_fetch_forecasts = -cfg.forecasts_interval;
 
@@ -178,6 +154,7 @@ void setup() {
   server.serveStatic("/config", SPIFFS, "/config.json");
   server.serveStatic("/js/transparency.min.js", SPIFFS, "/transparency.min.js");
 
+  httpUpdater.setup(&server);
   server.begin();
 }
 
@@ -436,7 +413,6 @@ void loop() {
 
   static int screen = 0;
 
-  ArduinoOTA.handle();
   server.handleClient();
   mdns.update();
 
