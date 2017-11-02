@@ -125,12 +125,15 @@ void setup() {
   out.println(WiFi.localIP());
 #endif
   tft.println();
-  tft.println(WiFi.localIP());
+  tft.print("http://");
+  tft.print(WiFi.localIP());
+  tft.println('/');
 
   if (mdns.begin(cfg.hostname, WiFi.localIP())) {
     out.println("MDNS started");
     mdns.addService("http", "tcp", 80);
-  }
+  } else
+    out.println("Error starting MDNS");
   
   ArduinoOTA.setHostname(cfg.hostname);
   ArduinoOTA.onStart([]() {
