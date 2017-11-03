@@ -37,8 +37,9 @@ function save_config() {
 </head>
 <body onload="load_config()">
 
-<h1>Configuration</h1>
 <form id="config">
+<fieldset>
+<legend>Configuration</legend>
 <table>
   <tr>
     <td>SSID:</td>
@@ -90,6 +91,24 @@ function save_config() {
     </td>
   </tr>
 </table>
+</fieldset>
+</form>
+
+<form action="/update" enctype="multipart/form-data" method="post">
+<fieldset>
+<legend>Firmware Upgrade</legend>
+<table>
+  <tr>
+    <td>Image File:</td>
+    <td><input name="image" type="file" accept=".ino.bin"/></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <input type="submit" value="Upgrade"/>
+    </td>
+  </tr>
+</table>
+</fieldset>
 </form>
 </body>
 </html>
