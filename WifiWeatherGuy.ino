@@ -424,6 +424,9 @@ void loop() {
       display_on = now;
       fade = cfg.bright;
       analogWrite(TFT_LED, fade);
+    } else if (screen > 0) {
+      screen = 0;
+      update_display(screen);
     }
   } else if (now - display_on > cfg.on_time) {
     analogWrite(TFT_LED, --fade);
