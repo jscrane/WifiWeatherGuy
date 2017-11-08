@@ -1,2 +1,1 @@
 - restart when update config
-- blog post ("client makes right")
