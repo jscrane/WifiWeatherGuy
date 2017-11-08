@@ -45,7 +45,7 @@ public:
   bool metric;
   uint32_t conditions_interval, forecasts_interval;
   uint32_t on_time;
-  uint8_t bright, dim;
+  uint8_t bright, dim, rotate;
 
   void configure(JsonObject &o);
 } cfg;
@@ -68,6 +68,7 @@ void config::configure(JsonObject &o) {
   on_time = 1000 * (int)o["display"];
   bright = o["bright"];
   dim = o["dim"];
+  rotate = o["rotate"];
 }
 
 void setup() {
@@ -93,6 +94,7 @@ void setup() {
   }
 
   fade = cfg.bright;
+  tft.setRotation(cfg.rotate);
   analogWrite(TFT_LED, fade);
 
   tft.println(F("Weather Guy (c)2017"));

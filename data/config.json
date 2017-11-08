@@ -9,5 +9,6 @@
  "forecasts_interval": 14400,
  "display": 30,
  "bright": 255,
- "dim": 20
+ "dim": 20,
+ "rotate": 1
 }
