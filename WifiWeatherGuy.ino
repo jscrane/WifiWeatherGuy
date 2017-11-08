@@ -123,17 +123,21 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
   WiFi.hostname(cfg.hostname);
-  if (!*cfg.ssid) {
+  if (*cfg.ssid) {
+    WiFi.begin(cfg.ssid, cfg.password);
+    for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) {
+      delay(500);
+      out.print(F("."));
+    }
+    connected = WiFi.status() == WL_CONNECTED;
+  }
+
+  if (!connected) {
     WiFi.softAP(cfg.hostname);
     tft.println("Connect to SSID");
     tft.println(cfg.hostname);
     tft.println("to configure WiFi");
   } else {
-    WiFi.begin(cfg.ssid, cfg.password);
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      out.print(F("."));
-    }
 #ifdef DEBUG  
     out.println();
     out.print(F("Connected to "));
@@ -153,7 +157,6 @@ void setup() {
 
     last_fetch_conditions = -cfg.conditions_interval;
     last_fetch_forecasts = -cfg.forecasts_interval;
-    connected = true;
   }
 
   server.on("/config", HTTP_POST, []() {
