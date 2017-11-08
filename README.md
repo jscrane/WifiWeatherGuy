@@ -12,6 +12,7 @@ WeatherGuy for ESP8266.
 - [ILI9163 library](https://github.com/sumotoy/TFT_ILI9163C)
 - [ESP8266 for Arduino](https://github.com/esp8266/Arduino.git)
 - [Arduino ESP8266 filesystem uploader](https://github.com/esp8266/arduino-esp8266fs-plugin)
+- [ArduinoJson](http://arduinojson.org/)
 
 ## Installation
 - Get a Wunderground [API key](https://www.wunderground.com/weather/api/d/docs)
