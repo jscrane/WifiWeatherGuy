@@ -33,6 +33,7 @@ Print &out = Serial;
 uint32_t last_fetch_conditions = 0, last_fetch_forecasts = 0;
 uint32_t display_on = 0;
 uint8_t fade;
+bool connected;
 
 class config: public Configuration {
 public:
@@ -49,18 +50,24 @@ public:
   void configure(JsonObject &o);
 } cfg;
 
+static void strncpy_null(char *dest, const char *src, int n) {
+  if (src)
+    strncpy(dest, src, n);
+  else
+    *dest = 0;
+}
 void config::configure(JsonObject &o) {
-  strncpy(ssid, o["ssid"], sizeof(ssid));
-  strncpy(password, o["password"], sizeof(password));
-  strncpy(key, o["key"], sizeof(key));
-  strncpy(station, o["station"], sizeof(station));
+  strncpy_null(ssid, o["ssid"], sizeof(ssid));
+  strncpy_null(password, o["password"], sizeof(password));
+  strncpy_null(key, o["key"], sizeof(key));
+  strncpy_null(station, o["station"], sizeof(station));
+  strncpy_null(hostname, o["hostname"], sizeof(hostname));
   conditions_interval = 1000 * (int)o["conditions_interval"];
   forecasts_interval = 1000 * (int)o["forecasts_interval"];
   metric = (bool)o["metric"];
   on_time = 1000 * (int)o["display"];
   bright = o["bright"];
   dim = o["dim"];
-  strncpy(hostname, o["hostname"], sizeof(hostname));
 }
 
 void setup() {
@@ -89,7 +96,6 @@ void setup() {
   analogWrite(TFT_LED, fade);
 
   tft.println(F("Weather Guy (c)2017"));
-  tft.println();
   tft.print(F("ssid: "));
   tft.println(cfg.ssid);
   tft.print(F("password: "));
@@ -115,30 +121,38 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
   WiFi.hostname(cfg.hostname);
-  WiFi.begin(cfg.ssid, cfg.password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    out.print(F("."));
-  }
+  if (!*cfg.ssid) {
+    WiFi.softAP(cfg.hostname);
+    tft.println("Connect to SSID");
+    tft.println(cfg.hostname);
+    tft.println("to configure WiFi");
+  } else {
+    WiFi.begin(cfg.ssid, cfg.password);
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      out.print(F("."));
+    }
 #ifdef DEBUG  
-  out.println();
-  out.print(F("Connected to "));
-  out.println(cfg.ssid);
-  out.println(WiFi.localIP());
+    out.println();
+    out.print(F("Connected to "));
+    out.println(cfg.ssid);
+    out.println(WiFi.localIP());
 #endif
-  tft.println();
-  tft.print("http://");
-  tft.print(WiFi.localIP());
-  tft.println('/');
+    tft.println();
+    tft.print("http://");
+    tft.print(WiFi.localIP());
+    tft.println('/');
 
-  if (mdns.begin(cfg.hostname, WiFi.localIP())) {
-    out.println("MDNS started");
-    mdns.addService("http", "tcp", 80);
-  } else
-    out.println("Error starting MDNS");
+    if (mdns.begin(cfg.hostname, WiFi.localIP())) {
+      out.println("MDNS started");
+      mdns.addService("http", "tcp", 80);
+    } else
+      out.println("Error starting MDNS");
 
-  last_fetch_conditions = -cfg.conditions_interval;
-  last_fetch_forecasts = -cfg.forecasts_interval;
+    last_fetch_conditions = -cfg.conditions_interval;
+    last_fetch_forecasts = -cfg.forecasts_interval;
+    connected = true;
+  }
 
   server.on("/config", HTTP_POST, []() {
     if (server.hasArg("plain")) {
@@ -414,6 +428,9 @@ void loop() {
   static int screen = 0;
 
   server.handleClient();
+  if (!connected)
+    return;
+
   mdns.update();
 
   uint32_t now = millis();
