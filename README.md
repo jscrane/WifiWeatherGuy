@@ -3,8 +3,6 @@ WeatherGuy for ESP8266.
 
 ![Schematic](eagle/schematic.png)
 
-![The Finished Article](eagle/wwg.png)
-
 ## Hardware
 - Wemos D1 Mini
 - ILI9163-based TFT display, see [here](http://henrysbench.capnfatz.com/henrys-bench/arduino-displays/arduino-1-44-in-spi-tft-display-tutorial/)
@@ -29,3 +27,5 @@ The weather icons must be 24-bit bitmaps; convert from GIF as follows:
 
 ## Credits
 - Javascript [transparency](https://github.com/leonidas/transparency)
+
+![The Finished Article](eagle/wwg.png)
