@@ -1,1 +1,2 @@
 - restart when update config
+- night icons
