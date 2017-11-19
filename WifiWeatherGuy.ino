@@ -165,7 +165,7 @@ void setup() {
       File f = SPIFFS.open("/config.json", "w");
       f.print(body);
       f.close();
-      // ESP.restart();
+      ESP.restart();
     } else
       server.send(400, "text/plain", "No body!");
   });
