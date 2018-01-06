@@ -10,6 +10,7 @@
 
 #include "Configuration.h"
 #include "display.h"
+#include "dbg.h"
 
 const char host[] = "api.wunderground.com";
 
@@ -27,8 +28,7 @@ MDNSResponder mdns;
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
 
-Print &out = Serial;
-#define DEBUG
+bool debug;
 
 uint32_t last_fetch_conditions = 0, last_fetch_forecasts = 0;
 uint32_t display_on = 0;
@@ -81,16 +81,17 @@ void setup() {
   tft.setCursor(0, 0);
 
   pinMode(SWITCH, INPUT_PULLUP);
+  debug = digitalRead(SWITCH) == LOW;
 
   bool result = SPIFFS.begin();
   if (!result) {
-    out.print("SPIFFS: ");
-    out.println(result);
+    ERR(print("SPIFFS: "));
+    ERR(println(result));
     return;
   }
 
   if (!cfg.read_file("/config.json")) {
-    out.print(F("config!"));
+    ERR(print(F("config!")));
     return;
   }
 
@@ -121,6 +122,8 @@ void setup() {
   tft.println(cfg.bright);
   tft.print(F("dim: "));
   tft.println(cfg.dim);
+  if (debug)
+    tft.println("DEBUG");
 
   WiFi.mode(WIFI_STA);
   WiFi.hostname(cfg.hostname);
@@ -128,7 +131,7 @@ void setup() {
     WiFi.begin(cfg.ssid, cfg.password);
     for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) {
       delay(500);
-      out.print(F("."));
+      OUT(print(F(".")));
     }
     connected = WiFi.status() == WL_CONNECTED;
   }
@@ -139,22 +142,22 @@ void setup() {
     tft.println(cfg.hostname);
     tft.println("to configure WiFi");
   } else {
-#ifdef DEBUG  
-    out.println();
-    out.print(F("Connected to "));
-    out.println(cfg.ssid);
-    out.println(WiFi.localIP());
-#endif
+
+    DBG(println());
+    DBG(print(F("Connected to ")));
+    DBG(println(cfg.ssid));
+    DBG(println(WiFi.localIP()));
+
     tft.println();
     tft.print("http://");
     tft.print(WiFi.localIP());
     tft.println('/');
 
     if (mdns.begin(cfg.hostname, WiFi.localIP())) {
-      out.println("MDNS started");
+      DBG(println("MDNS started"));
       mdns.addService("http", "tcp", 80);
     } else
-      out.println("Error starting MDNS");
+      ERR(println("Error starting MDNS"));
 
     last_fetch_conditions = -cfg.conditions_interval;
     last_fetch_forecasts = -cfg.forecasts_interval;
@@ -455,9 +458,8 @@ void loop() {
   }
   
   if (now - last_fetch_conditions > cfg.conditions_interval) {
-#ifdef DEBUG
-    out.println(F("Updating conditions..."));
-#endif
+    DBG(println(F("Updating conditions...")));
+
     last_fetch_conditions = now;
     WiFiClient client;
     if (connect_and_get(client, "astronomy/conditions")) {
@@ -467,14 +469,14 @@ void loop() {
       update_conditions(buffer.parseObject(client), conditions);
       update_display(screen);
       client.stop();
+      DBG(println(F("Done")));
     } else
-      out.println(F("Failed to fetch conditions!"));
+      ERR(println(F("Failed to fetch conditions!")));
   }
 
   if (now - last_fetch_forecasts > cfg.forecasts_interval) {
-#ifdef DEBUG
-    out.println(F("Updating forecast..."));
-#endif
+    DBG(println(F("Updating forecasts...")));
+
     last_fetch_forecasts = now;
     WiFiClient client;
     if (connect_and_get(client, "forecast")) {
@@ -483,7 +485,8 @@ void loop() {
       DynamicJsonBuffer forecast(bufferSize);
       update_forecasts(forecast.parseObject(client));
       client.stop();
+      DBG(println(F("Done")));
     } else
-      out.println(F("Failed to fetch forecast!"));
+      ERR(println(F("Failed to fetch forecast!")));
   }
 }

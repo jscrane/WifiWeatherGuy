@@ -4,8 +4,7 @@
 #include <time.h>
 #include <TFT_ILI9163C.h>
 #include "display.h"
-
-extern Print &out;
+#include "dbg.h"
 
 // These read 16- and 32-bit types from the SD card file.
 // BMP data is stored little-endian, Arduino is little-endian too.
@@ -37,9 +36,7 @@ int display_bmp(const char *filename, uint8_t x, uint8_t y) {
 
   if((x >= tft.width()) || (y >= tft.height())) return -1;
 
-#ifdef DEBUG
   uint32_t startTime = millis();
-#endif
 
   char fbuf[32];
   strcpy(fbuf, "/");
@@ -47,63 +44,54 @@ int display_bmp(const char *filename, uint8_t x, uint8_t y) {
   strcat(fbuf, ".bmp");
   File f = SPIFFS.open(fbuf, "r");
   if (!f) {
-    out.print(F("file.open!"));
-    out.print(' ');
-    out.println(filename);
+    ERR(print(F("file.open!")));
+    ERR(print(' '));
+    ERR(println(filename));
     return -1;
   }
 
   // Parse BMP header
   if (read16(f) != 0x4D42) {
-    out.println(F("Unknown BMP signature"));
+    ERR(println(F("Unknown BMP signature")));
     f.close();
     return -1;
   }
-#ifdef DEBUG  
-  out.print(F("File size: "));
-  out.println(read32(f));
-#else
-  (void)read32(f);
-#endif  
+
+  uint32_t size = read32(f);
+  DBG(print(F("File size: ")));
+  DBG(println(size));
+
   (void)read32(f); // Read & ignore creator bytes
   bmpImageoffset = read32(f); // Start of image data
-#ifdef DEBUG
-  out.print(F("Image Offset: ")); 
-  out.println(bmpImageoffset, DEC);
-#endif
+
+  DBG(print(F("Image Offset: ")));
+  DBG(println(bmpImageoffset, DEC));
+
   // Read DIB header
-#ifdef DEBUG
-  uint32_t header_size = read32(f);
-  out.print(F("Header size: ")); 
-  out.println(header_size);
-#else
-  (void)read32(f);
-#endif
+  size = read32(f);
+  DBG(print(F("Header size: ")));
+  DBG(println(size));
   bmpWidth  = read32(f);
   bmpHeight = read32(f);
   if (read16(f) != 1) {
-    out.println(F("# planes -- must be '1'"));
+    ERR(println(F("# planes -- must be '1'")));
     f.close();
     return -1;
   }
   bmpDepth = read16(f); // bits per pixel
-#ifdef DEBUG
-  out.print(F("Bit Depth: ")); 
-  out.println(bmpDepth);
-#endif
-  if((bmpDepth != 24) || (read32(f) != 0)) {
+  DBG(print(F("Bit Depth: ")));
+  DBG(println(bmpDepth));
+  if ((bmpDepth != 24) || (read32(f) != 0)) {
     // 0 = uncompressed
-    out.println(F("BMP format not recognized."));
+    ERR(println(F("BMP format not recognized.")));
     f.close();
     return -1; 
   }
   
-#ifdef DEBUG
-  out.print(F("Image size: "));
-  out.print(bmpWidth);
-  out.print('x');
-  out.println(bmpHeight);
-#endif
+  DBG(print(F("Image size: ")));
+  DBG(print(bmpWidth));
+  DBG(print('x'));
+  DBG(println(bmpHeight));
   
   // BMP rows are padded (if needed) to 4-byte boundary
   rowSize = (bmpWidth * 3 + 3) & ~3;
@@ -158,11 +146,9 @@ int display_bmp(const char *filename, uint8_t x, uint8_t y) {
     } // end pixel
   }
   f.close();
-#ifdef DEBUG
-  out.print(F("Loaded in "));
-  out.print(millis() - startTime);
-  out.println(F(" ms"));
-#endif
+  DBG(print(F("Loaded in ")));
+  DBG(print(millis() - startTime));
+  DBG(println(F(" ms")));
   return 0;
 }
 
