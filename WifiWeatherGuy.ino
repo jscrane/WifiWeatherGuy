@@ -56,6 +56,7 @@ static void strncpy_null(char *dest, const char *src, int n) {
   else
     *dest = 0;
 }
+
 void config::configure(JsonObject &o) {
   strncpy_null(ssid, o["ssid"], sizeof(ssid));
   strncpy_null(password, o["password"], sizeof(password));
@@ -178,7 +179,6 @@ void setup() {
 }
 
 struct Conditions {
-
   char icon[16];
   char weather[32];
   int temp, feelslike;
@@ -247,7 +247,6 @@ void update_conditions(JsonObject &root, struct Conditions &c) {
 }
 
 struct Forecast {
-
   time_t epoch;
   char day[4];
   int temp_high;
@@ -295,9 +294,7 @@ void display_weather(struct Conditions &c) {
   tft.setTextColor(BLACK);
 
   display_wind_speed(c.wind, c.wind_dir, c.wind_unit);
-
   display_temperature(c.temp, c.feelslike, c.temp_unit);
-
   display_humidity(c.humidity);
 
   tft.setTextSize(2);
@@ -320,7 +317,6 @@ void display_weather(struct Conditions &c) {
   display_bmp(c.icon, tft.width()/2 - 25, 42);
 
   display_time(c.epoch, cfg.metric);
-
   display_wind(c.wind_degrees, c.wind);
 }
 
@@ -377,9 +373,7 @@ void display_forecast(struct Forecast &f) {
   tft.setTextColor(BLACK);
 
   display_wind_speed(f.ave_wind, f.wind_dir, conditions.wind_unit);
-
   display_temperature(f.temp_high, f.temp_low, conditions.temp_unit);
-
   display_humidity(f.ave_humidity);
 
   tft.setTextSize(2);
@@ -392,7 +386,6 @@ void display_forecast(struct Forecast &f) {
   display_bmp(f.icon, tft.width()/2 - 25, 42);
 
   display_time(f.epoch, cfg.metric);
-
   display_wind(f.wind_degrees, f.ave_wind);
 }
 
@@ -402,13 +395,13 @@ void update_display(int screen) {
       display_weather(conditions);
       break;
     case 1:
+      display_astronomy(conditions);
+      break;
     case 2:
     case 3:
     case 4:
-      display_forecast(forecasts[screen - 1]);
-      break;
     case 5:
-      display_astronomy(conditions);
+      display_forecast(forecasts[screen - 2]);
       break;
   }
 }
