@@ -1,4 +1,5 @@
 - night icons
-- if no config file found, don't bomb out: set up default WifiWeatherGuy SSID
-- if config file but fail to connect to Wifi: set up configured hostname SSID
 - display error if fail to connect to wunderground
+- build new version
+- don't refresh display if conditions unchanged
+- think about v3: add light-sensor circuit
