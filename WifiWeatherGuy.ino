@@ -20,13 +20,11 @@
 #define TFT_LED D2
 #define SWITCH D3
 
+bool debug;
 TFT_ILI9163C tft = TFT_ILI9163C(CS, DC);
-
 MDNSResponder mdns;
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
-
-bool debug;
 
 uint32_t last_fetch_conditions = 0, last_fetch_forecasts = 0;
 uint32_t display_on = 0;
@@ -48,19 +46,12 @@ public:
   void configure(JsonObject &o);
 } cfg;
 
-static void strncpy_null(char *dest, const char *src, int n) {
-  if (src)
-    strncpy(dest, src, n);
-  else
-    *dest = 0;
-}
-
 void config::configure(JsonObject &o) {
-  strncpy_null(ssid, o[F("ssid")], sizeof(ssid));
-  strncpy_null(password, o[F("password")], sizeof(password));
-  strncpy_null(key, o[F("key")], sizeof(key));
-  strncpy_null(station, o[F("station")], sizeof(station));
-  strncpy_null(hostname, o[F("hostname")], sizeof(hostname));
+  strncpy(ssid, o[F("ssid")] | "", sizeof(ssid));
+  strncpy(password, o[F("password")] | "", sizeof(password));
+  strncpy(key, o[F("key")] | "", sizeof(key));
+  strncpy(station, o[F("station")] | "", sizeof(station));
+  strncpy(hostname, o[F("hostname")] | "", sizeof(hostname));
   conditions_interval = 1000 * (int)o[F("conditions_interval")];
   forecasts_interval = 1000 * (int)o[F("forecasts_interval")];
   metric = (bool)o[F("metric")];
@@ -121,7 +112,7 @@ void setup() {
   tft.print(F("dim: "));
   tft.println(cfg.dim);
   if (debug)
-    tft.println("DEBUG");
+    tft.println(F("DEBUG"));
 
   WiFi.mode(WIFI_STA);
   WiFi.hostname(cfg.hostname);
@@ -140,7 +131,6 @@ void setup() {
     tft.println(cfg.hostname);
     tft.println(F("to configure WiFi"));
   } else {
-
     DBG(println());
     DBG(print(F("Connected to ")));
     DBG(println(cfg.ssid));
@@ -201,15 +191,14 @@ struct Conditions {
   time_t epoch;
   char city[48];
   int wind_degrees;
-
 } conditions;
 
 bool update_conditions(JsonObject &root, struct Conditions &c) {
-
-  JsonObject& current_observation = root[F("current_observation")];
+  JsonObject &current_observation = root[F("current_observation")];
   time_t epoch = (time_t)atoi(current_observation[F("observation_epoch")]);
   if (epoch == c.epoch)
     return false;
+
   c.epoch = epoch;
   strncpy(c.icon, current_observation[F("icon")], sizeof(c.icon));
   strncpy(c.weather, current_observation[F("weather")], sizeof(c.weather));
@@ -254,11 +243,9 @@ struct Forecast {
   int ave_humidity;
   char conditions[32];
   char icon[16];
-
 } forecasts[4];
 
 void update_forecasts(JsonObject &root) {
-
   JsonArray &days = root[F("forecast")][F("simpleforecast")][F("forecastday")];
   for (int i = 0; i < 4; i++) {
     JsonObject &day = days[i];
@@ -285,7 +272,6 @@ void update_forecasts(JsonObject &root) {
 }
 
 void display_weather(struct Conditions &c) {
-
   tft.fillScreen(WHITE);
   tft.setTextColor(BLACK);
 
@@ -317,15 +303,14 @@ void display_weather(struct Conditions &c) {
 }
 
 void display_astronomy(struct Conditions &c) {
-
   tft.fillScreen(BLACK);
   tft.setTextColor(WHITE);
 
   tft.setTextSize(2);
   tft.setCursor(1, 1);
-  tft.print("sun");
+  tft.print(F("sun"));
   tft.setCursor(right(4, tft.width(), 2), 1);
-  tft.print("moon");
+  tft.print(F("moon"));
   tft.setTextSize(1);
   tft.setCursor(strlen(c.sunrise_hour) == 1? 7: 1, 17);
   tft.print(c.sunrise_hour);
@@ -364,7 +349,6 @@ void display_astronomy(struct Conditions &c) {
 }
 
 void display_forecast(struct Forecast &f) {
-
   tft.fillScreen(WHITE);
   tft.setTextColor(BLACK);
 
@@ -417,18 +401,16 @@ bool connect_and_get(WiFiClient &client, const __FlashStringHelper *path) {
 }
 
 void loop() {
-
-  static int screen = 0;
+  mdns.update();
 
   server.handleClient();
   if (!connected)
     return;
 
-  mdns.update();
-
   uint32_t now = millis();
   bool swtch = !digitalRead(SWITCH);
 
+  static int screen = 0;
   if (fade == cfg.dim) {
     if (swtch) {
       display_on = now;
