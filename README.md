@@ -16,7 +16,7 @@ WeatherGuy for ESP8266.
 
 ## Installation
 - Get a Wunderground [API key](https://www.wunderground.com/weather/api/d/docs)
-- Edit data/config.txt with your preferences
+- Edit data/config.json with your preferences
 - Upload the filesystem (Tools > ESP8266 Sketch Data Upload)
 - Upload the sketch
 
