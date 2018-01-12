@@ -2,8 +2,8 @@ extern TFT_ILI9163C tft;
 
 int display_bmp(const char *filename, uint8_t x, uint8_t y);
 void display_humidity(int humidity);
-void display_temperature(int temp, int temp_min, char temp_unit);
-void display_wind_speed(int wind_speed, const char *wind_dir, const char *wind_unit);
+void display_temperature(int temp, int temp_min, bool metric);
+void display_wind_speed(int wind_speed, const char *wind_dir, bool metric);
 void display_wind(int wind_degrees, int wind_speed);
 void display_time(time_t &epoch, bool metric);
 

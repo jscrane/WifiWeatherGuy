@@ -12,8 +12,6 @@
 #include "display.h"
 #include "dbg.h"
 
-const char host[] = "api.wunderground.com";
-
 #define BLACK   0x0000
 #define WHITE   0xFFFF
 
@@ -185,12 +183,9 @@ struct Conditions {
   char icon[16];
   char weather[32];
   int temp, feelslike;
-  char temp_unit;
   int humidity;
   int wind;
-  const char *wind_unit;
   int atmos_pressure;
-  const char *pres_unit;
   int pressure_trend;
   char wind_dir[10];
   char sunrise_hour[3];
@@ -221,19 +216,13 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
   if (cfg.metric) {
     c.temp = current_observation[F("temp_c")];
     c.feelslike = atoi(current_observation[F("feelslike_c")]);
-    c.temp_unit = 'C';
     c.wind = current_observation[F("wind_kph")];
-    c.wind_unit = "kph";
     c.atmos_pressure = atoi(current_observation[F("pressure_mb")]);
-    c.pres_unit = "mb";
   } else {
     c.temp = current_observation[F("temp_f")];
     c.feelslike = atoi(current_observation[F("feelslike_f")]);
-    c.temp_unit = 'F';
     c.wind = current_observation[F("wind_mph")];
-    c.wind_unit = "mph";
     c.atmos_pressure = atoi(current_observation[F("pressure_in")]);
-    c.pres_unit = "in";
   }
   c.humidity = atoi(current_observation[F("relative_humidity")]);
   c.pressure_trend = atoi(current_observation[F("pressure_trend")]);
@@ -300,15 +289,15 @@ void display_weather(struct Conditions &c) {
   tft.fillScreen(WHITE);
   tft.setTextColor(BLACK);
 
-  display_wind_speed(c.wind, c.wind_dir, c.wind_unit);
-  display_temperature(c.temp, c.feelslike, c.temp_unit);
+  display_wind_speed(c.wind, c.wind_dir, cfg.metric? F("kph"): F("mph"));
+  display_temperature(c.temp, c.feelslike, cfg.metric);
   display_humidity(c.humidity);
 
   tft.setTextSize(2);
-  tft.setCursor(right(val_len(c.atmos_pressure), tft.width(), 2)-6*strlen(c.pres_unit), 1);
+  tft.setCursor(right(val_len(c.atmos_pressure), tft.width(), 2)-12, 1);
   tft.print(c.atmos_pressure);
   tft.setTextSize(1);
-  tft.print(c.pres_unit);
+  tft.print(cfg.metric? F("mb"): F("in"));
   if (c.pressure_trend == 1) {
     tft.setCursor(right(6, tft.width(), 1), 17);
     tft.print(F("rising"));
@@ -379,8 +368,8 @@ void display_forecast(struct Forecast &f) {
   tft.fillScreen(WHITE);
   tft.setTextColor(BLACK);
 
-  display_wind_speed(f.ave_wind, f.wind_dir, conditions.wind_unit);
-  display_temperature(f.temp_high, f.temp_low, conditions.temp_unit);
+  display_wind_speed(f.ave_wind, f.wind_dir, cfg.metric);
+  display_temperature(f.temp_high, f.temp_low, cfg.metric);
   display_humidity(f.ave_humidity);
 
   tft.setTextSize(2);
@@ -413,13 +402,12 @@ void update_display(int screen) {
   }
 }
 
-bool connect_and_get(WiFiClient &client, const char *path) {
+bool connect_and_get(WiFiClient &client, const __FlashStringHelper *path) {
+  const __FlashStringHelper *host = F("api.wunderground.com");
   if (client.connect(host, 80)) {
-    client.print(String("GET /api/") + cfg.key + "/" + path + "/q/" + cfg.station
-                 + ".json HTTP/1.1\r\n"
-                 + "Host: " + host + "\r\n"
-                 + "Connection: close\r\n"
-                 + "\r\n");
+    client.print(String("GET /api/") + cfg.key + F("/") + path + F("/q/") + cfg.station
+                 + F(".json HTTP/1.1\r\n")
+                 + F("Host: ") + host + F("\r\nConnection: close\r\n\r\n"));
     if (client.connected()) {
       client.find("\r\n\r\n");
       return true;
@@ -466,7 +454,7 @@ void loop() {
     DBG(println(F("Updating conditions...")));
 
     last_fetch_conditions = now;
-    if (connect_and_get(client, "astronomy/conditions")) {
+    if (connect_and_get(client, F("astronomy/conditions"))) {
       const size_t bufferSize = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + 
                                 JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
       DynamicJsonBuffer buffer(bufferSize);
@@ -483,7 +471,7 @@ void loop() {
     DBG(println(F("Updating forecasts...")));
 
     last_fetch_forecasts = now;
-    if (connect_and_get(client, "forecast")) {
+    if (connect_and_get(client, F("forecast"))) {
       const size_t bufferSize = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 
                                 8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 5360;
       DynamicJsonBuffer forecast(bufferSize);

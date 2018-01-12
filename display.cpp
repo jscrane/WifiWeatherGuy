@@ -197,22 +197,22 @@ void display_wind(int wind_degrees, int wind_speed) {
   tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/50, ey+wind_speed*(cy-ey)/50, BLACK);
 }
 
-void display_wind_speed(int wind_speed, const char *wind_dir, const char *wind_unit) {
+void display_wind_speed(int wind_speed, const char *wind_dir, bool metric) {
   tft.setTextSize(2);
   tft.setCursor(1, 1);
   tft.print(wind_speed);
   tft.setTextSize(1);
-  tft.print(wind_unit);
+  tft.print(metric? F("kph"): F("mph"));
   tft.setCursor(1, 17);
   tft.print(wind_dir);
 }
 
-void display_temperature(int temp, int temp_min, char temp_unit) {
+void display_temperature(int temp, int temp_min, bool metric) {
   tft.setTextSize(2);
   tft.setCursor(1, tft.height() - 16);
   tft.print(temp);
   tft.setTextSize(1);
-  tft.print(temp_unit);
+  tft.print(metric? 'C': 'F');
   if (temp != temp_min) {
     tft.setCursor(1, tft.height() - 24);
     tft.print(temp_min);
