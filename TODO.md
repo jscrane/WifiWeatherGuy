@@ -1,5 +1,5 @@
 - night icons
 - display error if fail to connect to wunderground
 - build new version
-- don't refresh display if conditions unchanged
-- think about v3: add light-sensor circuit
+- think about v3: add light-sensor circuit, break out Wemos pins
+- use new operator| for default values
