@@ -200,34 +200,36 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
     return false;
 
   c.epoch = epoch;
-  strncpy(c.icon, current_observation[F("icon")], sizeof(c.icon));
-  strncpy(c.weather, current_observation[F("weather")], sizeof(c.weather));
+  strncpy(c.icon, current_observation[F("icon")] | "", sizeof(c.icon));
+  strncpy(c.weather, current_observation[F("weather")] | "", sizeof(c.weather));
   if (cfg.metric) {
     c.temp = current_observation[F("temp_c")];
-    c.feelslike = atoi(current_observation[F("feelslike_c")]);
+    c.feelslike = atoi(current_observation[F("feelslike_c")] | "0");
     c.wind = current_observation[F("wind_kph")];
-    c.atmos_pressure = atoi(current_observation[F("pressure_mb")]);
+    c.atmos_pressure = atoi(current_observation[F("pressure_mb")] | "0");
   } else {
     c.temp = current_observation[F("temp_f")];
-    c.feelslike = atoi(current_observation[F("feelslike_f")]);
+    c.feelslike = atoi(current_observation[F("feelslike_f")] | "0");
     c.wind = current_observation[F("wind_mph")];
-    c.atmos_pressure = atoi(current_observation[F("pressure_in")]);
+    c.atmos_pressure = atoi(current_observation[F("pressure_in")] | "0");
   }
-  c.humidity = atoi(current_observation[F("relative_humidity")]);
-  c.pressure_trend = atoi(current_observation[F("pressure_trend")]);
-  strncpy(c.wind_dir, current_observation[F("wind_dir")], sizeof(c.wind_dir));;
+  c.humidity = atoi(current_observation[F("relative_humidity")] | "0");
+  c.pressure_trend = atoi(current_observation[F("pressure_trend")] | "0");
+  strncpy(c.wind_dir, current_observation[F("wind_dir")] | "", sizeof(c.wind_dir));;
   c.wind_degrees = current_observation[F("wind_degrees")];
-  strncpy(c.city, current_observation[F("observation_location")][F("city")], sizeof(c.city));
-  strncpy(c.sunrise_hour, root[F("sun_phase")][F("sunrise")][F("hour")], sizeof(c.sunrise_hour));
-  strncpy(c.sunrise_minute, root[F("sun_phase")][F("sunrise")][F("minute")], sizeof(c.sunrise_minute));
-  strncpy(c.sunset_hour, root[F("sun_phase")][F("sunset")][F("hour")], sizeof(c.sunset_hour));
-  strncpy(c.sunset_minute, root[F("sun_phase")][F("sunset")][F("minute")], sizeof(c.sunset_minute));
-  strncpy(c.age_of_moon, root[F("moon_phase")][F("ageOfMoon")], sizeof(c.age_of_moon));
-  strncpy(c.moon_phase, root[F("moon_phase")][F("phaseofMoon")], sizeof(c.moon_phase));
-  strncpy(c.moonrise_hour, root[F("moon_phase")][F("moonrise")][F("hour")], sizeof(c.moonrise_hour));
-  strncpy(c.moonrise_minute, root[F("moon_phase")][F("moonrise")][F("minute")], sizeof(c.moonrise_minute));
-  strncpy(c.moonset_hour, root[F("moon_phase")][F("moonset")][F("hour")], sizeof(c.moonset_hour));
-  strncpy(c.moonset_minute, root[F("moon_phase")][F("moonset")][F("minute")], sizeof(c.moonset_minute));
+  strncpy(c.city, current_observation[F("observation_location")][F("city")] | "", sizeof(c.city));
+  JsonObject &sun = root[F("sun_phase")];
+  strncpy(c.sunrise_hour, sun[F("sunrise")][F("hour")] | "", sizeof(c.sunrise_hour));
+  strncpy(c.sunrise_minute, sun[F("sunrise")][F("minute")] | "", sizeof(c.sunrise_minute));
+  strncpy(c.sunset_hour, sun[F("sunset")][F("hour")] | "", sizeof(c.sunset_hour));
+  strncpy(c.sunset_minute, sun[F("sunset")][F("minute")] | "", sizeof(c.sunset_minute));
+  JsonObject &moon = root[F("moon_phase")];
+  strncpy(c.age_of_moon, moon[F("ageOfMoon")] | "", sizeof(c.age_of_moon));
+  strncpy(c.moon_phase, moon[F("phaseofMoon")] | "", sizeof(c.moon_phase));
+  strncpy(c.moonrise_hour, moon[F("moonrise")][F("hour")] | "", sizeof(c.moonrise_hour));
+  strncpy(c.moonrise_minute, moon[F("moonrise")][F("minute")] | "", sizeof(c.moonrise_minute));
+  strncpy(c.moonset_hour, moon[F("moonset")][F("hour")] | "", sizeof(c.moonset_hour));
+  strncpy(c.moonset_minute, moon[F("moonset")][F("minute")] | "", sizeof(c.moonset_minute));
   return true;
 }
 
@@ -247,27 +249,27 @@ struct Forecast {
 
 void update_forecasts(JsonObject &root) {
   JsonArray &days = root[F("forecast")][F("simpleforecast")][F("forecastday")];
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < days.size(); i++) {
     JsonObject &day = days[i];
     struct Forecast &f = forecasts[i];
     f.epoch = (time_t)atoi(day[F("date")][F("epoch")]);
-    strncpy(f.day, day[F("date")][F("weekday_short")], sizeof(f.day));
+    strncpy(f.day, day[F("date")][F("weekday_short")] | "", sizeof(f.day));
     if (cfg.metric) {
-      f.temp_high = atoi(day[F("high")][F("celsius")]);
-      f.temp_low = atoi(day[F("low")][F("celsius")]);
+      f.temp_high = atoi(day[F("high")][F("celsius")] | "0");
+      f.temp_low = atoi(day[F("low")][F("celsius")] | "0");
       f.max_wind = day[F("maxwind")][F("kph")];
       f.ave_wind = day[F("avewind")][F("kph")];
     } else {
-      f.temp_high = atoi(day[F("high")][F("fahrenheit")]);
-      f.temp_low = atoi(day[F("low")][F("fahrenheit")]);
+      f.temp_high = atoi(day[F("high")][F("fahrenheit")] | "0");
+      f.temp_low = atoi(day[F("low")][F("fahrenheit")] | "0");
       f.max_wind = day[F("maxwind")][F("mph")];
       f.ave_wind = day[F("avewind")][F("mph")];
     }
     f.ave_humidity = day[F("avehumidity")];
     f.wind_degrees = day[F("avewind")][F("degrees")];
-    strncpy(f.wind_dir, day[F("avewind")][F("dir")], sizeof(f.wind_dir));
-    strncpy(f.conditions, day[F("conditions")], sizeof(f.conditions));
-    strncpy(f.icon, day[F("icon")], sizeof(f.icon));
+    strncpy(f.wind_dir, day[F("avewind")][F("dir")] | "", sizeof(f.wind_dir));
+    strncpy(f.conditions, day[F("conditions")] | "", sizeof(f.conditions));
+    strncpy(f.icon, day[F("icon")] | "", sizeof(f.icon));
   }
 }
 
@@ -393,6 +395,10 @@ bool connect_and_get(WiFiClient &client, const __FlashStringHelper *path) {
                  + F(".json HTTP/1.1\r\n")
                  + F("Host: ") + host + F("\r\nConnection: close\r\n\r\n"));
     if (client.connected()) {
+      unsigned long now = millis();
+      while (!client.available())
+        if (millis() - now > 5000)
+          return false;
       client.find("\r\n\r\n");
       return true;
     }
@@ -442,11 +448,11 @@ void loop() {
       DynamicJsonBuffer buffer(bufferSize);
       if (update_conditions(buffer.parseObject(client), conditions))
         update_display(screen);
-      client.stop();
       DBG(println(ESP.getFreeHeap()));
       DBG(println(F("Done")));
     } else
       ERR(println(F("Failed to fetch conditions!")));
+    client.stop();
   }
 
   if (now - last_fetch_forecasts > cfg.forecasts_interval) {
@@ -458,10 +464,10 @@ void loop() {
                                 8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 5360;
       DynamicJsonBuffer forecast(bufferSize);
       update_forecasts(forecast.parseObject(client));
-      client.stop();
       DBG(println(ESP.getFreeHeap()));
       DBG(println(F("Done")));
     } else
       ERR(println(F("Failed to fetch forecast!")));
+    client.stop();
   }
 }
