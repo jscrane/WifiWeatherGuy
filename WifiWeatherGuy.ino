@@ -64,6 +64,7 @@ void config::configure(JsonObject &o) {
 void setup() {
 
   Serial.begin(115200);
+  analogWriteRange(255);
 
   tft.begin();
   tft.setTextColor(WHITE, BLACK);
@@ -88,7 +89,7 @@ void setup() {
   tft.setRotation(cfg.rotate);
   analogWrite(TFT_LED, fade);
 
-  tft.println(F("Weather Guy (c)2017"));
+  tft.println(F("Weather Guy (c)2018"));
   tft.print(F("ssid: "));
   tft.println(cfg.ssid);
   tft.print(F("password: "));
@@ -120,7 +121,8 @@ void setup() {
     WiFi.begin(cfg.ssid, cfg.password);
     for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) {
       delay(500);
-      OUT(print(F(".")));
+      OUT(print('.'));
+      tft.print('.');
     }
     connected = WiFi.status() == WL_CONNECTED;
   }
