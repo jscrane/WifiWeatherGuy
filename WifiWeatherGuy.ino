@@ -74,8 +74,7 @@ void setup() {
 
   bool result = SPIFFS.begin();
   if (!result) {
-    ERR(print(F("SPIFFS: ")));
-    ERR(println(result));
+    ERR(print(F("SPIFFS!")));
     return;
   }
 
