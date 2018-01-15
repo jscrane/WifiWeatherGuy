@@ -52,19 +52,18 @@ void config::configure(JsonObject &o) {
   strncpy(key, o[F("key")] | "", sizeof(key));
   strncpy(station, o[F("station")] | "", sizeof(station));
   strncpy(hostname, o[F("hostname")] | "", sizeof(hostname));
-  conditions_interval = 1000 * (int)o[F("conditions_interval")];
-  forecasts_interval = 1000 * (int)o[F("forecasts_interval")];
-  metric = (bool)o[F("metric")];
-  on_time = 1000 * (int)o[F("display")];
-  bright = o[F("bright")];
-  dim = o[F("dim")];
-  rotate = o[F("rotate")];
+  conditions_interval = 1000 * ((int)o[F("conditions_interval")] | 1800);
+  forecasts_interval = 1000 * ((int)o[F("forecasts_interval")] | 43200);
+  metric = (bool)(o[F("metric")]) | true;
+  on_time = 1000 * ((int)o[F("display")] | 30);
+  bright = o[F("bright")] | 200;
+  dim = o[F("dim")] | 50;
+  rotate = o[F("rotate")] | 0;
 }
 
 void setup() {
 
   Serial.begin(115200);
-  analogWriteRange(255);
 
   tft.begin();
   tft.setTextColor(WHITE, BLACK);
@@ -86,9 +85,9 @@ void setup() {
   }
 
   fade = cfg.bright;
-  tft.setRotation(cfg.rotate);
   analogWrite(TFT_LED, fade);
 
+  tft.setRotation(cfg.rotate);
   tft.println(F("Weather Guy (c)2018"));
   tft.print(F("ssid: "));
   tft.println(cfg.ssid);
@@ -121,7 +120,6 @@ void setup() {
     WiFi.begin(cfg.ssid, cfg.password);
     for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) {
       delay(500);
-      OUT(print('.'));
       tft.print('.');
     }
     connected = WiFi.status() == WL_CONNECTED;
@@ -144,10 +142,10 @@ void setup() {
     tft.println('/');
 
     if (mdns.begin(cfg.hostname, WiFi.localIP())) {
-      DBG(println(F("MDNS started")));
+      DBG(println(F("mDNS started")));
       mdns.addService("http", "tcp", 80);
     } else
-      ERR(println(F("Error starting MDNS")));
+      ERR(println(F("Error starting mDNS")));
 
     last_fetch_conditions = -cfg.conditions_interval;
     last_fetch_forecasts = -cfg.forecasts_interval;
@@ -393,7 +391,7 @@ void update_display(int screen) {
 bool connect_and_get(WiFiClient &client, const __FlashStringHelper *path) {
   const __FlashStringHelper *host = F("api.wunderground.com");
   if (client.connect(host, 80)) {
-    client.print(String("GET /api/") + cfg.key + F("/") + path + F("/q/") + cfg.station
+    client.print(String("GET /api/") + cfg.key + '/' + path + F("/q/") + cfg.station
                  + F(".json HTTP/1.1\r\n")
                  + F("Host: ") + host + F("\r\nConnection: close\r\n\r\n"));
     if (client.connected()) {
@@ -441,33 +439,39 @@ void loop() {
   
   static WiFiClient client;
   if (now - last_fetch_conditions > cfg.conditions_interval) {
-    DBG(println(F("Updating conditions...")));
+    const size_t bufferSize = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) +
+                              JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
+    DBG(print(F("Updating conditions ")));
+    DBG(print(bufferSize));
+    DBG(print(' '));
+    DBG(println(ESP.getFreeHeap()));
 
     last_fetch_conditions = now;
     if (connect_and_get(client, F("astronomy/conditions"))) {
-      const size_t bufferSize = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + 
-                                JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
       DynamicJsonBuffer buffer(bufferSize);
       if (update_conditions(buffer.parseObject(client), conditions))
         update_display(screen);
+      DBG(print(F("Done ")));
       DBG(println(ESP.getFreeHeap()));
-      DBG(println(F("Done")));
     } else
       ERR(println(F("Failed to fetch conditions!")));
     client.stop();
   }
 
   if (now - last_fetch_forecasts > cfg.forecasts_interval) {
-    DBG(println(F("Updating forecasts...")));
+    const size_t bufferSize = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) +
+                              8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 5360;
+    DBG(print(F("Updating forecasts ")));
+    DBG(print(bufferSize));
+    DBG(print(' '));
+    DBG(println(ESP.getFreeHeap()));
 
     last_fetch_forecasts = now;
     if (connect_and_get(client, F("forecast"))) {
-      const size_t bufferSize = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 
-                                8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 5360;
       DynamicJsonBuffer forecast(bufferSize);
       update_forecasts(forecast.parseObject(client));
+      DBG(print(F("Done ")));
       DBG(println(ESP.getFreeHeap()));
-      DBG(println(F("Done")));
     } else
       ERR(println(F("Failed to fetch forecast!")));
     client.stop();
