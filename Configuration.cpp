@@ -7,12 +7,13 @@ bool Configuration::read_file(const char *filename) {
   if (!f)
     return false;
 
-  char buf[512];
-  f.readBytes(buf, sizeof(buf));
   DynamicJsonBuffer json(JSON_OBJECT_SIZE(11) + 210);
-  JsonObject &root = json.parseObject(buf);
-  configure(root);
+  JsonObject &root = json.parseObject(f);
   f.close();
+  if (!root.success())
+    return false;
+
+  configure(root);
   return true;
 }
 

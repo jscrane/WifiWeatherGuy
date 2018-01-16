@@ -52,13 +52,13 @@ void config::configure(JsonObject &o) {
   strncpy(key, o[F("key")] | "", sizeof(key));
   strncpy(station, o[F("station")] | "", sizeof(station));
   strncpy(hostname, o[F("hostname")] | "", sizeof(hostname));
-  conditions_interval = 1000 * ((int)o[F("conditions_interval")] | 1800);
-  forecasts_interval = 1000 * ((int)o[F("forecasts_interval")] | 43200);
-  metric = (bool)(o[F("metric")]) | true;
-  on_time = 1000 * ((int)o[F("display")] | 30);
-  bright = o[F("bright")] | 200;
-  dim = o[F("dim")] | 50;
-  rotate = o[F("rotate")] | 0;
+  conditions_interval = 1000 * (int)o[F("conditions_interval")];
+  forecasts_interval = 1000 * (int)o[F("forecasts_interval")];
+  metric = (bool)o[F("metric")];
+  on_time = 1000 * (int)o[F("display")];
+  bright = (int)o[F("bright")];
+  dim = (int)o[F("dim")];
+  rotate = (int)o[F("rotate")];
 }
 
 void setup() {
@@ -447,10 +447,14 @@ void loop() {
 
     if (connect_and_get(client, F("astronomy/conditions"))) {
       DynamicJsonBuffer buffer(bufferSize);
-      if (update_conditions(buffer.parseObject(client), conditions))
-        update_display(screen);
-      DBG(print(F("Done ")));
-      DBG(println(ESP.getFreeHeap()));
+      JsonObject &root = buffer.parseObject(client);
+      if (root.success()) {
+        if (update_conditions(root, conditions))
+          update_display(screen);
+        DBG(print(F("Done ")));
+        DBG(println(ESP.getFreeHeap()));
+      } else
+        ERR(println(F("Failed to parse conditions!")));
       last_fetch_conditions = now;
     } else
       ERR(println(F("Failed to fetch conditions!")));
@@ -467,9 +471,13 @@ void loop() {
 
     if (connect_and_get(client, F("forecast"))) {
       DynamicJsonBuffer forecast(bufferSize);
-      update_forecasts(forecast.parseObject(client));
-      DBG(print(F("Done ")));
-      DBG(println(ESP.getFreeHeap()));
+      JsonObject &root = forecast.parseObject(client);
+      if (root.success()) {
+        update_forecasts(root);
+        DBG(print(F("Done ")));
+        DBG(println(ESP.getFreeHeap()));
+      } else
+        ERR(println(F("Failed to parse forecasts!")));
       last_fetch_forecasts = now;
     } else
       ERR(println(F("Failed to fetch forecast!")));
