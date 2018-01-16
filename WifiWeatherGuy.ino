@@ -445,13 +445,13 @@ void loop() {
     DBG(print(' '));
     DBG(println(ESP.getFreeHeap()));
 
-    last_fetch_conditions = now;
     if (connect_and_get(client, F("astronomy/conditions"))) {
       DynamicJsonBuffer buffer(bufferSize);
       if (update_conditions(buffer.parseObject(client), conditions))
         update_display(screen);
       DBG(print(F("Done ")));
       DBG(println(ESP.getFreeHeap()));
+      last_fetch_conditions = now;
     } else
       ERR(println(F("Failed to fetch conditions!")));
     client.stop();
@@ -465,12 +465,12 @@ void loop() {
     DBG(print(' '));
     DBG(println(ESP.getFreeHeap()));
 
-    last_fetch_forecasts = now;
     if (connect_and_get(client, F("forecast"))) {
       DynamicJsonBuffer forecast(bufferSize);
       update_forecasts(forecast.parseObject(client));
       DBG(print(F("Done ")));
       DBG(println(ESP.getFreeHeap()));
+      last_fetch_forecasts = now;
     } else
       ERR(println(F("Failed to fetch forecast!")));
     client.stop();
