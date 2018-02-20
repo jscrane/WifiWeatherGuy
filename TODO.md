@@ -1,4 +1,0 @@
-- night icons
-- display error if fail to connect to wunderground
-- think about v3: add light-sensor circuit, break out Wemos pins
-- try with Pre-Release-1.0p7 branch
