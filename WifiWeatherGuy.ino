@@ -124,32 +124,6 @@ void setup() {
     connected = WiFi.status() == WL_CONNECTED;
   }
 
-  if (!connected) {
-    WiFi.softAP(cfg.hostname);
-    tft.println(F("Connect to SSID"));
-    tft.println(cfg.hostname);
-    tft.println(F("to configure WiFi"));
-  } else {
-    DBG(println());
-    DBG(print(F("Connected to ")));
-    DBG(println(cfg.ssid));
-    DBG(println(WiFi.localIP()));
-
-    tft.println();
-    tft.print(F("http://"));
-    tft.print(WiFi.localIP());
-    tft.println('/');
-
-    if (mdns.begin(cfg.hostname, WiFi.localIP())) {
-      DBG(println(F("mDNS started")));
-      mdns.addService("http", "tcp", 80);
-    } else
-      ERR(println(F("Error starting mDNS")));
-
-    last_fetch_conditions = -cfg.conditions_interval;
-    last_fetch_forecasts = -cfg.forecasts_interval;
-  }
-
   server.on("/config", HTTP_POST, []() {
     if (server.hasArg("plain")) {
       String body = server.arg("plain");
@@ -166,6 +140,32 @@ void setup() {
 
   httpUpdater.setup(&server);
   server.begin();
+
+  if (mdns.begin(cfg.hostname, WiFi.localIP())) {
+    DBG(println(F("mDNS started")));
+    mdns.addService("http", "tcp", 80);
+  } else
+    ERR(println(F("Error starting mDNS")));
+
+  if (!connected) {
+    WiFi.softAP(cfg.hostname);
+    tft.println(F("Connect to SSID"));
+    tft.println(cfg.hostname);
+    tft.println(F("to configure WiFi"));
+  } else {
+    DBG(println());
+    DBG(print(F("Connected to ")));
+    DBG(println(cfg.ssid));
+    DBG(println(WiFi.localIP()));
+
+    tft.println();
+    tft.print(F("http://"));
+    tft.print(WiFi.localIP());
+    tft.println('/');
+
+    last_fetch_conditions = -cfg.conditions_interval;
+    last_fetch_forecasts = -cfg.forecasts_interval;
+  }
 }
 
 struct Conditions {
