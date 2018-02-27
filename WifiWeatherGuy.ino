@@ -393,9 +393,15 @@ void update_display(int screen) {
 bool connect_and_get(WiFiClient &client, const __FlashStringHelper *path) {
   const __FlashStringHelper *host = F("api.wunderground.com");
   if (client.connect(host, 80)) {
-    client.print(String("GET /api/") + cfg.key + '/' + path + F("/q/") + cfg.station
-                 + F(".json HTTP/1.1\r\n")
-                 + F("Host: ") + host + F("\r\nConnection: close\r\n\r\n"));
+    client.print("GET /api/");
+    client.print(cfg.key);
+    client.print('/');
+    client.print(path);
+    client.print(F("/q/"));
+    client.print(cfg.station);
+    client.print(F(".json HTTP/1.1\r\nHost: "));
+    client.print(host);
+    client.print(F("\r\nConnection: close\r\n\r\n"));
     if (client.connected()) {
       unsigned long now = millis();
       while (!client.available())
