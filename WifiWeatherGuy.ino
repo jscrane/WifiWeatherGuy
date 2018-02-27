@@ -194,8 +194,10 @@ struct Conditions {
 
 bool update_conditions(JsonObject &root, struct Conditions &c) {
   JsonObject &current_observation = root[F("current_observation")];
-  time_t epoch = (time_t)atoi(current_observation[F("observation_epoch")]);
-  if (epoch == c.epoch)
+  if (!current_observation.success())
+    return false;
+  time_t epoch = (time_t)atoi(current_observation[F("observation_epoch")] | "0");
+  if (epoch == c.epoch || epoch == 0)
     return false;
 
   c.epoch = epoch;
@@ -248,28 +250,29 @@ struct Forecast {
 
 void update_forecasts(JsonObject &root) {
   JsonArray &days = root[F("forecast")][F("simpleforecast")][F("forecastday")];
-  for (int i = 0; i < days.size(); i++) {
-    JsonObject &day = days[i];
-    struct Forecast &f = forecasts[i];
-    f.epoch = (time_t)atoi(day[F("date")][F("epoch")]);
-    strlcpy(f.day, day[F("date")][F("weekday_short")] | "", sizeof(f.day));
-    if (cfg.metric) {
-      f.temp_high = atoi(day[F("high")][F("celsius")] | "0");
-      f.temp_low = atoi(day[F("low")][F("celsius")] | "0");
-      f.max_wind = day[F("maxwind")][F("kph")];
-      f.ave_wind = day[F("avewind")][F("kph")];
-    } else {
-      f.temp_high = atoi(day[F("high")][F("fahrenheit")] | "0");
-      f.temp_low = atoi(day[F("low")][F("fahrenheit")] | "0");
-      f.max_wind = day[F("maxwind")][F("mph")];
-      f.ave_wind = day[F("avewind")][F("mph")];
+  if (days.success())
+    for (int i = 0; i < days.size() && i < sizeof(forecasts)/sizeof(struct Forecast); i++) {
+      JsonObject &day = days[i];
+      struct Forecast &f = forecasts[i];
+      f.epoch = (time_t)atoi(day[F("date")][F("epoch")] | "0");
+      strlcpy(f.day, day[F("date")][F("weekday_short")] | "", sizeof(f.day));
+      if (cfg.metric) {
+        f.temp_high = atoi(day[F("high")][F("celsius")] | "0");
+        f.temp_low = atoi(day[F("low")][F("celsius")] | "0");
+        f.max_wind = day[F("maxwind")][F("kph")];
+        f.ave_wind = day[F("avewind")][F("kph")];
+      } else {
+        f.temp_high = atoi(day[F("high")][F("fahrenheit")] | "0");
+        f.temp_low = atoi(day[F("low")][F("fahrenheit")] | "0");
+        f.max_wind = day[F("maxwind")][F("mph")];
+        f.ave_wind = day[F("avewind")][F("mph")];
+      }
+      f.ave_humidity = day[F("avehumidity")];
+      f.wind_degrees = day[F("avewind")][F("degrees")];
+      strlcpy(f.wind_dir, day[F("avewind")][F("dir")] | "", sizeof(f.wind_dir));
+      strlcpy(f.conditions, day[F("conditions")] | "", sizeof(f.conditions));
+      strlcpy(f.icon, day[F("icon")] | "", sizeof(f.icon));
     }
-    f.ave_humidity = day[F("avehumidity")];
-    f.wind_degrees = day[F("avewind")][F("degrees")];
-    strlcpy(f.wind_dir, day[F("avewind")][F("dir")] | "", sizeof(f.wind_dir));
-    strlcpy(f.conditions, day[F("conditions")] | "", sizeof(f.conditions));
-    strlcpy(f.icon, day[F("icon")] | "", sizeof(f.icon));
-  }
 }
 
 void display_weather(struct Conditions &c) {
