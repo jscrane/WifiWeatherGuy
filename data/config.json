@@ -10,5 +10,6 @@
  "display": 30,
  "bright": 255,
  "dim": 20,
- "rotate": 1
+ "rotate": 1,
+ "retry_interval": 300
 }

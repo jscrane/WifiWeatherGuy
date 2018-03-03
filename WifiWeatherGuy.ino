@@ -40,7 +40,7 @@ public:
   char hostname[17];
   bool metric;
   uint32_t conditions_interval, forecasts_interval;
-  uint32_t on_time;
+  uint32_t on_time, retry_interval;
   uint8_t bright, dim, rotate;
 
   void configure(JsonObject &o);
@@ -59,6 +59,7 @@ void config::configure(JsonObject &o) {
   bright = o[F("bright")];
   dim = o[F("dim")];
   rotate = o[F("rotate")];
+  retry_interval = 1000 * (int)o[F("retry_interval")];
 }
 
 void setup() {
@@ -417,8 +418,6 @@ bool connect_and_get(WiFiClient &client, const __FlashStringHelper *path) {
 static unsigned cbytes = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) +
                           JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
 
-const unsigned snooze_delay = 300000;
-
 static unsigned fbytes = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) +
                             8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 6150;
 
@@ -446,16 +445,16 @@ void fetch(unsigned now, const __FlashStringHelper *path, unsigned &bytes, unsig
           last_fetch = now;
         } else {
           ERR(println(F("Failed to parse!")));
-          last_fetch += snooze_delay;
+          last_fetch += cfg.retry_interval;
         }
       } else {
         ERR(println(F("Failed to fetch!")));
-        last_fetch += snooze_delay;
+        last_fetch += cfg.retry_interval;
       }
       client.stop();
     } else {
       DBG(println(F("Insufficient memory to update!")));
-      last_fetch += snooze_delay;
+      last_fetch += cfg.retry_interval;
     }
   }
 }
