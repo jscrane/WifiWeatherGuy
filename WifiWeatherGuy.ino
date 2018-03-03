@@ -414,6 +414,52 @@ bool connect_and_get(WiFiClient &client, const __FlashStringHelper *path) {
   return false;
 }
 
+static unsigned cbytes = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) +
+                          JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
+
+const unsigned snooze_delay = 300000;
+
+static unsigned fbytes = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) +
+                            8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 6150;
+
+void fetch(unsigned now, const __FlashStringHelper *path, unsigned &bytes, unsigned &last_fetch, unsigned interval, void (*f)(JsonObject &)) {
+  if (now - last_fetch > interval) {
+    unsigned heap = ESP.getFreeHeap();
+    if (heap > bytes) {
+      DBG(print(F("Updating ")));
+      DBG(print(path));
+      DBG(print(' '));
+      DBG(print(bytes));
+      DBG(print(' '));
+      DBG(println(heap));
+      WiFiClient client;
+      if (connect_and_get(client, path)) {
+        DynamicJsonBuffer buffer(bytes);
+        JsonObject &root = buffer.parseObject(client);
+        if (root.success()) {
+          f(root);
+          unsigned n = buffer.size();
+          DBG(print(F("Done ")));
+          DBG(println(n));
+          if (n > bytes)
+            bytes = n;
+          last_fetch = now;
+        } else {
+          ERR(println(F("Failed to parse!")));
+          last_fetch += snooze_delay;
+        }
+      } else {
+        ERR(println(F("Failed to fetch!")));
+        last_fetch += snooze_delay;
+      }
+      client.stop();
+    } else {
+      DBG(println(F("Insufficient memory to update!")));
+      last_fetch += snooze_delay;
+    }
+  }
+}
+
 void loop() {
   mdns.update();
 
@@ -445,77 +491,12 @@ void loop() {
     update_display(screen);
   }
 
-  const unsigned snooze_delay = 300000;
-  if (now - last_fetch_conditions > cfg.conditions_interval) {
-    unsigned heap = ESP.getFreeHeap();
-    static unsigned cbytes = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) +
-                              JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
-    if (heap > cbytes) {
-      DBG(print(F("Updating conditions ")));
-      DBG(print(cbytes));
-      DBG(print(' '));
-      DBG(println(heap));
-      WiFiClient client;
-      if (connect_and_get(client, F("astronomy/conditions"))) {
-        DynamicJsonBuffer buffer(cbytes);
-        JsonObject &root = buffer.parseObject(client);
-        if (root.success()) {
-          if (update_conditions(root, conditions))
-            update_display(screen);
-          unsigned n = buffer.size();
-          DBG(print(F("Done ")));
-          DBG(println(n));
-          if (n > cbytes)
-            cbytes = n;
-          last_fetch_conditions = now;
-        } else {
-          ERR(println(F("Failed to parse conditions!")));
-          last_fetch_conditions += snooze_delay;
-        }
-      } else {
-        ERR(println(F("Failed to fetch conditions!")));
-        last_fetch_conditions += snooze_delay;
-      }
-      client.stop();
-    } else {
-      DBG(println(F("Insufficient memory to update conditions!")));
-      last_fetch_conditions += snooze_delay;
-    }
-  }
+  fetch(now, F("astronomy/conditions"), cbytes, last_fetch_conditions, cfg.conditions_interval, [] (JsonObject &root) {
+    if (update_conditions(root, conditions))
+      update_display(screen);
+  });
 
-  if (now - last_fetch_forecasts > cfg.forecasts_interval) {
-    unsigned heap = ESP.getFreeHeap();
-    static unsigned fbytes = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) +
-                              8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 6150;
-    if (heap > fbytes) {
-      DBG(print(F("Updating forecasts ")));
-      DBG(print(fbytes));
-      DBG(print(' '));
-      DBG(println(heap));
-      WiFiClient client;
-      if (connect_and_get(client, F("forecast"))) {
-        DynamicJsonBuffer buffer(fbytes);
-        JsonObject &root = buffer.parseObject(client);
-        if (root.success()) {
-          update_forecasts(root);
-          unsigned n = buffer.size();
-          DBG(print(F("Done ")));
-          DBG(println(n));
-          if (n > fbytes)
-            fbytes = n;
-          last_fetch_forecasts = now;
-        } else {
-          ERR(println(F("Failed to parse forecasts!")));
-          last_fetch_forecasts += snooze_delay;
-        }
-      } else {
-        ERR(println(F("Failed to fetch forecast!")));
-        last_fetch_forecasts += snooze_delay;
-      }
-      client.stop();
-    } else {
-      DBG(println(F("Insufficient memory to update forecasts!")));
-      last_fetch_forecasts += snooze_delay;
-    }
-  }
+  fetch(now, F("forecast"), fbytes, last_fetch_forecasts, cfg.forecasts_interval, [] (JsonObject &root) {
+    update_forecasts(root);
+  });
 }
