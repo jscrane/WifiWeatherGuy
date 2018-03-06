@@ -62,10 +62,10 @@ void config::configure(JsonObject &o) {
   retry_interval = 1000 * (int)o[F("retry_interval")];
 }
 
+static volatile bool swtch = false;
+
 void setup() {
-
   Serial.begin(115200);
-
   tft.begin();
   tft.setTextColor(WHITE, BLACK);
   tft.setCursor(0, 0);
@@ -167,6 +167,7 @@ void setup() {
     last_fetch_conditions = -cfg.conditions_interval;
     last_fetch_forecasts = -cfg.forecasts_interval;
   }
+  attachInterrupt(SWITCH, []() { swtch=true; }, RISING);
 }
 
 struct Conditions {
@@ -467,11 +468,10 @@ void loop() {
     return;
 
   uint32_t now = millis();
-  bool swtch = !digitalRead(SWITCH);
-
   static int screen = 0;
   if (fade == cfg.dim) {
     if (swtch) {
+      swtch = false;
       display_on = now;
       fade = cfg.bright;
       analogWrite(TFT_LED, fade);
@@ -483,6 +483,7 @@ void loop() {
     analogWrite(TFT_LED, --fade);
     delay(25);
   } else if (swtch && now - display_on > 500) {
+    swtch = false;
     if (screen > 5)
       screen = 0;
     else
