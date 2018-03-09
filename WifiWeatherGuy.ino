@@ -12,9 +12,6 @@
 #include "display.h"
 #include "dbg.h"
 
-#define BLACK   0x0000
-#define WHITE   0xFFFF
-
 #define CS D6
 #define DC D8
 #define TFT_LED D2
