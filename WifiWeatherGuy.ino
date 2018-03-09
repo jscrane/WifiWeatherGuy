@@ -38,7 +38,8 @@ public:
   bool metric;
   uint32_t conditions_interval, forecasts_interval;
   uint32_t on_time, retry_interval;
-  uint8_t bright, dim, rotate;
+  uint16_t bright, dim;
+  uint8_t rotate;
 
   void configure(JsonObject &o);
 } cfg;
