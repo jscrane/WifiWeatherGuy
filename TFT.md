@@ -5,6 +5,13 @@ David Prentice's
 [st7735_readreg](https://github.com/prenticedavid/TFT_SPI_kbv) 
 sketch is useful to identify chipsets in various cheap 1.44" TFT displays.
 
+| SPI | TFT |
+| --- | --- |
+| MOSI | SDA |
+| SCK | SCK |
+| SS  | CS  |
+| DC  | AO  |
+
 KMR1441_SPI V2
 --------------
 The backlight LED doesn't seem to be variable with PWM on this board.
