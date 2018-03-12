@@ -16,6 +16,7 @@
 #define DC D8
 #define TFT_LED D2
 #define SWITCH D3
+#define HAVE_PWM
 
 bool debug;
 TFT_ILI9163C tft = TFT_ILI9163C(CS, DC);
@@ -472,14 +473,25 @@ void loop() {
 			swtch = false;
 			display_on = now;
 			fade = cfg.bright;
+#if defined(HAVE_PWM)
 			analogWrite(TFT_LED, fade);
+#else
+			update_display(screen);
+#endif
 		} else if (screen > 0) {
 			screen = 0;
+#if defined(HAVE_PWM)
 			update_display(screen);
+#endif
 		}
 	} else if (now - display_on > cfg.on_time) {
+#if defined(HAVE_PWM)
 		analogWrite(TFT_LED, --fade);
 		delay(25);
+#else
+		tft.fillScreen(BLACK);
+		fade = cfg.dim;
+#endif
 	} else if (swtch && now - display_on > 500) {
 		swtch = false;
 		if (screen > 5)
