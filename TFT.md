@@ -5,12 +5,12 @@ David Prentice's
 [st7735_readreg](https://github.com/prenticedavid/TFT_SPI_kbv) 
 sketch is useful to identify chipsets in various cheap 1.44" TFT displays.
 
-| SPI | TFT |
-| --- | --- |
-| MOSI | SDA |
-| SCK | SCK |
-| SS  | CS  |
-| DC  | AO  |
+| SPI | TFT | Pin |
+| --- | --- | --- |
+| MOSI | SDA | 11 |
+| SCK | SCK | 13 |
+| SS  | CS  | 10 |
+| DC  | AO  | 9 |
 
 KMR1441_SPI V2
 --------------
