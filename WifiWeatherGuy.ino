@@ -499,7 +499,7 @@ void loop() {
 	}
 
 	fetch(now, F("astronomy/conditions"), cbytes, last_fetch_conditions, cfg.conditions_interval, [] (JsonObject &root) {
-		if (update_conditions(root, conditions))
+		if (update_conditions(root, conditions) && (cfg.dimmable || fade == cfg.bright))
 			update_display(screen);
 	});
 
