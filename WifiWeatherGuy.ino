@@ -16,9 +16,7 @@
 #define DC	D8
 #define TFT_LED	D2
 #define SWITCH	D3
-#define HAVE_PWM
 
-bool debug;
 TFT_ILI9163C tft = TFT_ILI9163C(CS, DC);
 MDNSResponder mdns;
 ESP8266WebServer server(80);
@@ -27,7 +25,7 @@ ESP8266HTTPUpdateServer httpUpdater;
 uint32_t last_fetch_conditions, last_fetch_forecasts;
 uint32_t display_on;
 uint8_t fade;
-bool connected;
+bool connected, debug;
 
 class config: public Configuration {
 public:
@@ -36,7 +34,7 @@ public:
 	char key[17];
 	char station[33];
 	char hostname[17];
-	bool metric;
+	bool metric, dimmable;
 	uint32_t conditions_interval, forecasts_interval;
 	uint32_t on_time, retry_interval;
 	uint16_t bright, dim;
@@ -54,6 +52,7 @@ void config::configure(JsonObject &o) {
 	conditions_interval = 1000 * (int)o[F("conditions_interval")];
 	forecasts_interval = 1000 * (int)o[F("forecasts_interval")];
 	metric = o[F("metric")];
+	dimmable = o[F("dimmable")];
 	on_time = 1000 * (int)o[F("display")];
 	bright = o[F("bright")];
 	dim = o[F("dim")];
@@ -473,25 +472,23 @@ void loop() {
 			swtch = false;
 			display_on = now;
 			fade = cfg.bright;
-#if defined(HAVE_PWM)
-			analogWrite(TFT_LED, fade);
-#else
-			update_display(screen);
-#endif
+			if (cfg.dimmable)
+				analogWrite(TFT_LED, fade);
+			else
+				update_display(screen);
 		} else if (screen > 0) {
 			screen = 0;
-#if defined(HAVE_PWM)
-			update_display(screen);
-#endif
+			if (cfg.dimmable)
+				update_display(screen);
 		}
 	} else if (now - display_on > cfg.on_time) {
-#if defined(HAVE_PWM)
-		analogWrite(TFT_LED, --fade);
-		delay(25);
-#else
-		tft.fillScreen(BLACK);
-		fade = cfg.dim;
-#endif
+		if (cfg.dimmable) {
+			analogWrite(TFT_LED, --fade);
+			delay(25);
+		} else {
+			tft.fillScreen(BLACK);
+			fade = cfg.dim;
+		}
 	} else if (swtch && now - display_on > 500) {
 		swtch = false;
 		if (screen > 5)

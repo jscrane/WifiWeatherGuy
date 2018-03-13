@@ -8,6 +8,7 @@
  "conditions_interval": 1200,
  "forecasts_interval": 14400,
  "display": 30,
+ "dimmable": 1,
  "bright": 255,
  "dim": 20,
  "rotate": 1,
