@@ -197,8 +197,7 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
 	if (!current_observation.success())
 		return false;
 	time_t epoch = (time_t)atoi(current_observation[F("observation_epoch")] | "0");
-	if (epoch <= c.epoch)
-		return false;
+	bool update = epoch > c.epoch;
 
 	c.epoch = epoch;
 	strlcpy(c.icon, current_observation[F("icon")] | "", sizeof(c.icon));
@@ -231,7 +230,7 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
 	strlcpy(c.moonrise_minute, moon[F("moonrise")][F("minute")] | "", sizeof(c.moonrise_minute));
 	strlcpy(c.moonset_hour, moon[F("moonset")][F("hour")] | "", sizeof(c.moonset_hour));
 	strlcpy(c.moonset_minute, moon[F("moonset")][F("minute")] | "", sizeof(c.moonset_minute));
-	return true;
+	return update;
 }
 
 struct Forecast {
@@ -465,11 +464,11 @@ void loop() {
 	if (!connected)
 		return;
 
-	uint32_t now = millis();
 	static int screen = 0;
+	static uint32_t last_switch = -1000;
+	uint32_t now = millis(), ontime = now - display_on;
 	if (fade == cfg.dim) {
 		if (swtch) {
-			swtch = false;
 			display_on = now;
 			fade = cfg.bright;
 			if (cfg.dimmable)
@@ -481,7 +480,7 @@ void loop() {
 			if (cfg.dimmable)
 				update_display(screen);
 		}
-	} else if (now - display_on > cfg.on_time) {
+	} else if (ontime > cfg.on_time) {
 		if (cfg.dimmable) {
 			analogWrite(TFT_LED, --fade);
 			delay(25);
@@ -489,14 +488,14 @@ void loop() {
 			tft.fillScreen(BLACK);
 			fade = cfg.dim;
 		}
-	} else if (swtch && now - display_on > 500) {
-		swtch = false;
+	} else if (swtch && ontime > 500) {
 		if (screen > 5)
 			screen = 0;
 		else
 			screen++;
 		update_display(screen);
 	}
+	swtch = false;
 
 	fetch(now, F("astronomy/conditions"), cbytes, last_fetch_conditions, cfg.conditions_interval, [] (JsonObject &root) {
 		if (update_conditions(root, conditions) && (cfg.dimmable || fade == cfg.bright))
