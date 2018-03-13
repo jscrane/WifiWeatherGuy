@@ -12,10 +12,10 @@
 #include "display.h"
 #include "dbg.h"
 
-#define CS D6
-#define DC D8
-#define TFT_LED D2
-#define SWITCH D3
+#define CS	D6
+#define DC	D8
+#define TFT_LED	D2
+#define SWITCH	D3
 #define HAVE_PWM
 
 bool debug;
@@ -24,8 +24,8 @@ MDNSResponder mdns;
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
 
-uint32_t last_fetch_conditions = 0, last_fetch_forecasts = 0;
-uint32_t display_on = 0;
+uint32_t last_fetch_conditions, last_fetch_forecasts;
+uint32_t display_on;
 uint8_t fade;
 bool connected;
 
@@ -61,7 +61,7 @@ void config::configure(JsonObject &o) {
 	retry_interval = 1000 * (int)o[F("retry_interval")];
 }
 
-static volatile bool swtch = false;
+static volatile bool swtch;
 
 void setup() {
 	Serial.begin(115200);
@@ -198,7 +198,7 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
 	if (!current_observation.success())
 		return false;
 	time_t epoch = (time_t)atoi(current_observation[F("observation_epoch")] | "0");
-	if (epoch == c.epoch || epoch == 0)
+	if (epoch <= c.epoch)
 		return false;
 
 	c.epoch = epoch;
