@@ -105,10 +105,13 @@ void setup() {
 	tft.println(cfg.on_time);
 	tft.print(F("metric: "));
 	tft.println(cfg.metric);
-	tft.print(F("bright: "));
-	tft.println(cfg.bright);
-	tft.print(F("dim: "));
-	tft.println(cfg.dim);
+	if (cfg.dimmable) {
+		tft.print(F("bright: "));
+		tft.println(cfg.bright);
+		tft.print(F("dim: "));
+		tft.println(cfg.dim);
+	} else
+		tft.println(F("not dimmable"));
 	if (debug)
 		tft.println(F("DEBUG"));
 
@@ -197,7 +200,8 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
 	if (!current_observation.success())
 		return false;
 	time_t epoch = (time_t)atoi(current_observation[F("observation_epoch")] | "0");
-	bool update = epoch > c.epoch;
+	if (epoch <= c.epoch)
+		return false;	    
 
 	c.epoch = epoch;
 	strlcpy(c.icon, current_observation[F("icon")] | "", sizeof(c.icon));
