@@ -11,6 +11,7 @@ function load_config() {
     }
     response.json().then(function(data) {
       Transparency.render(document.getElementById('config'), data);
+      chk_dimmable();
     });
   }).catch(function(err) {
     console.log('Fetch error :-S', err);
@@ -32,6 +33,11 @@ function save_config() {
   xhr.open("POST", '/config', true);
   xhr.setRequestHeader('Content-Type', 'application/json');
   xhr.send(JSON.stringify(data, null, "  "));
+}
+function chk_dimmable() {
+  val = document.getElementById('dimmable').checked;
+  document.getElementById('bright').disabled = !val;
+  document.getElementById('dim').disabled = !val;
 }
 </script>
 </head>
@@ -83,7 +89,7 @@ function save_config() {
   </tr>
   <tr>
     <td>Dimmable:</td>
-    <td><input type="checkbox" id="dimmable"></td>
+    <td><input type="checkbox" id="dimmable" onclick="chk_dimmable()"></td>
   </tr>
   <tr>
     <td>Brightness:</td>
