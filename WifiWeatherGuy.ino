@@ -234,7 +234,7 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
 	strlcpy(c.moonrise_minute, moon[F("moonrise")][F("minute")] | "", sizeof(c.moonrise_minute));
 	strlcpy(c.moonset_hour, moon[F("moonset")][F("hour")] | "", sizeof(c.moonset_hour));
 	strlcpy(c.moonset_minute, moon[F("moonset")][F("minute")] | "", sizeof(c.moonset_minute));
-	return update;
+	return true;
 }
 
 struct Forecast {
