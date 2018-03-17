@@ -2,7 +2,7 @@
 #include <string.h>
 #include <FS.h>
 #include <time.h>
-#include <TFT_ILI9163C.h>
+#include <TFT_eSPI.h>
 #include "display.h"
 #include "dbg.h"
 
@@ -142,7 +142,7 @@ int display_bmp(const char *filename, uint8_t x, uint8_t y) {
       g = buf[buffidx++];
       r = buf[buffidx++];
 
-      tft.pushColor(tft.Color565(r,g,b));
+      tft.pushColor(tft.color565(r, g, b));
     } // end pixel
   }
   f.close();
@@ -193,8 +193,8 @@ void display_wind(int wind_degrees, int wind_speed) {
   }
   // wind dir rotates clockwise so compensate
   int ex = cx-rad*cos, ey = cy-rad*sin;
-  tft.fillCircle(ex, ey, 3, BLACK);
-  tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/50, ey+wind_speed*(cy-ey)/50, BLACK);
+  tft.fillCircle(ex, ey, 3, TFT_BLACK);
+  tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/50, ey+wind_speed*(cy-ey)/50, TFT_BLACK);
 }
 
 void display_wind_speed(int wind_speed, const char *wind_dir, bool metric) {

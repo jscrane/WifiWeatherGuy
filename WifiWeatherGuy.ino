@@ -1,8 +1,8 @@
 #include <ArduinoJson.h>
 #include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <TFT_ILI9163C.h>
 #include <FS.h>
+#include <Adafruit_GFX.h>
+#include <TFT_eSPI.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
@@ -17,7 +17,7 @@
 #define TFT_LED	D2
 #define SWITCH	D3
 
-TFT_ILI9163C tft = TFT_ILI9163C(CS, DC);
+TFT_eSPI tft;
 MDNSResponder mdns;
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
@@ -64,8 +64,8 @@ static volatile bool swtch;
 
 void setup() {
 	Serial.begin(115200);
-	tft.begin();
-	tft.setTextColor(WHITE, BLACK);
+	tft.init();
+	tft.setTextColor(TFT_WHITE, TFT_BLACK);
 	tft.setCursor(0, 0);
 
 	pinMode(SWITCH, INPUT_PULLUP);
@@ -279,8 +279,8 @@ void update_forecasts(JsonObject &root) {
 }
 
 void display_weather(struct Conditions &c) {
-	tft.fillScreen(WHITE);
-	tft.setTextColor(BLACK);
+	tft.fillScreen(TFT_WHITE);
+	tft.setTextColor(TFT_BLACK);
 
 	display_wind_speed(c.wind, c.wind_dir, cfg.metric? F("kph"): F("mph"));
 	display_temperature(c.temp, c.feelslike, cfg.metric);
@@ -310,8 +310,8 @@ void display_weather(struct Conditions &c) {
 }
 
 void display_astronomy(struct Conditions &c) {
-	tft.fillScreen(BLACK);
-	tft.setTextColor(WHITE);
+	tft.fillScreen(TFT_BLACK);
+	tft.setTextColor(TFT_WHITE);
 
 	tft.setTextSize(2);
 	tft.setCursor(1, 1);
@@ -356,8 +356,8 @@ void display_astronomy(struct Conditions &c) {
 }
 
 void display_forecast(struct Forecast &f) {
-	tft.fillScreen(WHITE);
-	tft.setTextColor(BLACK);
+	tft.fillScreen(TFT_WHITE);
+	tft.setTextColor(TFT_BLACK);
 
 	display_wind_speed(f.ave_wind, f.wind_dir, cfg.metric);
 	display_temperature(f.temp_high, f.temp_low, cfg.metric);
@@ -489,7 +489,7 @@ void loop() {
 			analogWrite(TFT_LED, --fade);
 			delay(25);
 		} else {
-			tft.fillScreen(BLACK);
+			tft.fillScreen(TFT_BLACK);
 			fade = cfg.dim;
 		}
 	} else if (swtch && ontime > 500) {

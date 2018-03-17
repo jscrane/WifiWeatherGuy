@@ -1,4 +1,4 @@
-extern TFT_ILI9163C tft;
+extern TFT_eSPI tft;
 
 int display_bmp(const char *filename, uint8_t x, uint8_t y);
 void display_humidity(int humidity);
