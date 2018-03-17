@@ -85,6 +85,7 @@ void setup() {
 	fade = cfg.bright;
 	analogWrite(TFT_LED, fade);
 
+	tft.fillScreen(TFT_BLACK);
 	tft.setRotation(cfg.rotate);
 	tft.println(F("Weather Guy (c)2018"));
 	tft.print(F("ssid: "));
