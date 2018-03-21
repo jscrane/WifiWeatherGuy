@@ -494,7 +494,7 @@ void loop() {
 			fade = cfg.dim;
 		}
 	} else if (swtch && ontime > 500) {
-		if (screen > 5)
+		if (screen >= 5)
 			screen = 0;
 		else
 			screen++;
