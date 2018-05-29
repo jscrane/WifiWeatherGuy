@@ -169,7 +169,7 @@ void setup() {
 		last_fetch_conditions = -cfg.conditions_interval;
 		last_fetch_forecasts = -cfg.forecasts_interval;
 	}
-	attachInterrupt(SWITCH, []() { swtch=true; }, RISING);
+	attachInterrupt(SWITCH, []() { swtch=true; }, FALLING);
 }
 
 struct Conditions {
