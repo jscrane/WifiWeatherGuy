@@ -308,7 +308,7 @@ void display_weather(struct Conditions &c) {
 	display_bmp(c.icon, tft.width()/2 - 25, 42);
 
 	display_time(c.epoch, cfg.metric);
-	if (c.wind > 0)
+	if (c.wind > 0 && strcmp_P(c.wind_dir, PSTR("Variable")))
 		display_wind(c.wind_degrees, c.wind);
 }
 
