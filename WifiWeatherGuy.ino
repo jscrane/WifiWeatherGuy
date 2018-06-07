@@ -119,6 +119,7 @@ void setup() {
 	WiFi.mode(WIFI_STA);
 	WiFi.hostname(cfg.hostname);
 	if (*cfg.ssid) {
+		WiFi.setAutoReconnect(true);
 		WiFi.begin(cfg.ssid, cfg.password);
 		for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) {
 			delay(500);
