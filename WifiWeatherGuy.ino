@@ -1,3 +1,4 @@
+#include <time.h>
 #include <ArduinoJson.h>
 #include <SPI.h>
 #include <FS.h>
@@ -174,7 +175,7 @@ void setup() {
 }
 
 struct Conditions {
-	char icon[16];
+	char icon[20];
 	char weather[32];
 	int temp, feelslike;
 	int humidity;
@@ -182,9 +183,9 @@ struct Conditions {
 	int atmos_pressure;
 	int pressure_trend;
 	char wind_dir[10];
-	char sunrise_hour[3];
+	int sunrise_hour;
 	char sunrise_minute[3];
-	char sunset_hour[3];
+	int sunset_hour;
 	char sunset_minute[3];
 	char moonrise_hour[3];
 	char moonrise_minute[3];
@@ -206,7 +207,6 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
 		return false;	    
 
 	c.epoch = epoch;
-	strlcpy(c.icon, current_observation[F("icon")] | "", sizeof(c.icon));
 	strlcpy(c.weather, current_observation[F("weather")] | "", sizeof(c.weather));
 	if (cfg.metric) {
 		c.temp = current_observation[F("temp_c")];
@@ -221,14 +221,16 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
 	}
 	c.humidity = atoi(current_observation[F("relative_humidity")] | "0");
 	c.pressure_trend = atoi(current_observation[F("pressure_trend")] | "0");
-	strlcpy(c.wind_dir, current_observation[F("wind_dir")] | "", sizeof(c.wind_dir));;
+	strlcpy(c.wind_dir, current_observation[F("wind_dir")] | "", sizeof(c.wind_dir));
 	c.wind_degrees = current_observation[F("wind_degrees")];
 	strlcpy(c.city, current_observation[F("observation_location")][F("city")] | "", sizeof(c.city));
+
 	JsonObject &sun = root[F("sun_phase")];
-	strlcpy(c.sunrise_hour, sun[F("sunrise")][F("hour")] | "", sizeof(c.sunrise_hour));
+	c.sunrise_hour = atoi(sun[F("sunrise")][F("hour")] | "0");
 	strlcpy(c.sunrise_minute, sun[F("sunrise")][F("minute")] | "", sizeof(c.sunrise_minute));
-	strlcpy(c.sunset_hour, sun[F("sunset")][F("hour")] | "", sizeof(c.sunset_hour));
+	c.sunset_hour = atoi(sun[F("sunset")][F("hour")] | "0");
 	strlcpy(c.sunset_minute, sun[F("sunset")][F("minute")] | "", sizeof(c.sunset_minute));
+
 	JsonObject &moon = root[F("moon_phase")];
 	strlcpy(c.age_of_moon, moon[F("ageOfMoon")] | "", sizeof(c.age_of_moon));
 	strlcpy(c.moon_phase, moon[F("phaseofMoon")] | "", sizeof(c.moon_phase));
@@ -236,6 +238,15 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
 	strlcpy(c.moonrise_minute, moon[F("moonrise")][F("minute")] | "", sizeof(c.moonrise_minute));
 	strlcpy(c.moonset_hour, moon[F("moonset")][F("hour")] | "", sizeof(c.moonset_hour));
 	strlcpy(c.moonset_minute, moon[F("moonset")][F("minute")] | "", sizeof(c.moonset_minute));
+
+	struct tm *tm = localtime(&epoch);
+	const char *icon = current_observation[F("icon")] | "";
+	if (!tm || (tm->tm_hour >= c.sunrise_hour && tm->tm_hour <= c.sunset_hour))
+		strlcpy(c.icon, icon, sizeof(c.icon));
+	else {
+		strcpy_P(c.icon, PSTR("nt_"));
+		strlcat(c.icon, icon, sizeof(c.icon)-3);
+	}
 	return true;
 }
 
@@ -250,7 +261,7 @@ struct Forecast {
 	int wind_degrees;
 	int ave_humidity;
 	char conditions[32];
-	char icon[16];
+	char icon[20];
 } forecasts[4];
 
 void update_forecasts(JsonObject &root) {
@@ -322,7 +333,7 @@ void display_astronomy(struct Conditions &c) {
 	tft.setCursor(right(4, tft.width(), 2), 1);
 	tft.print(F("moon"));
 	tft.setTextSize(1);
-	tft.setCursor(strlen(c.sunrise_hour) == 1? 7: 1, 17);
+	tft.setCursor(c.sunrise_hour < 10? 7: 1, 17);
 	tft.print(c.sunrise_hour);
 	tft.print(':');
 	tft.print(c.sunrise_minute);
