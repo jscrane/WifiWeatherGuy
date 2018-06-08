@@ -23,14 +23,14 @@ static uint32_t read32(File &f) {
 
 // from Adafruit's spitftbitmap ST7735 example
 int display_bmp(const char *filename, uint8_t x, uint8_t y) {
-	int			bmpWidth, bmpHeight;	 // W+H in pixels
-	uint8_t	bmpDepth;							// Bit depth (currently must be 24)
-	uint32_t bmpImageoffset;				// Start of image data in file
-	uint32_t rowSize;							 // Not always = bmpWidth; may have padding
+	int bmpWidth, bmpHeight;	// W+H in pixels
+	uint8_t	bmpDepth;		// Bit depth (currently must be 24)
+	uint32_t bmpImageoffset;	// Start of image data in file
+	uint32_t rowSize;	// Not always = bmpWidth; may have padding
 	uint8_t buf[60];
-	uint8_t	buffidx = sizeof(buf);			// Current position in buffer
-	boolean	flip		= true;				// BMP is stored bottom-to-top
-	int			w, h, row, col;
+	uint8_t	buffidx = sizeof(buf);	// Current position in buffer
+	boolean	flip = true;		// BMP is stored bottom-to-top
+	int w, h, row, col;
 	uint8_t	r, g, b;
 	uint32_t pos = 0;
 
