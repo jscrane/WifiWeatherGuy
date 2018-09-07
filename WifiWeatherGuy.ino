@@ -63,6 +63,8 @@ void config::configure(JsonObject &o) {
 
 static volatile bool swtch;
 
+const char *config_file = "/config.json";
+
 void setup() {
 	Serial.begin(115200);
 	tft.init();
@@ -78,7 +80,7 @@ void setup() {
 		return;
 	}
 
-	if (!cfg.read_file("/config.json")) {
+	if (!cfg.read_file(config_file)) {
 		ERR(print(F("config!")));
 		return;
 	}
@@ -132,7 +134,7 @@ void setup() {
 	server.on("/config", HTTP_POST, []() {
 		if (server.hasArg("plain")) {
 			String body = server.arg("plain");
-			File f = SPIFFS.open("/config.json", "w");
+			File f = SPIFFS.open(config_file, "w");
 			f.print(body);
 			f.close();
 			ESP.restart();
@@ -140,7 +142,7 @@ void setup() {
 			server.send(400, "text/plain", "No body!");
 	});
 	server.serveStatic("/", SPIFFS, "/index.html");
-	server.serveStatic("/config", SPIFFS, "/config.json");
+	server.serveStatic("/config", SPIFFS, config_file);
 	server.serveStatic("/js/transparency.min.js", SPIFFS, "/transparency.min.js");
 
 	httpUpdater.setup(&server);
@@ -410,7 +412,7 @@ void update_display(int screen) {
 bool connect_and_get(WiFiClient &client, const __FlashStringHelper *path) {
 	const __FlashStringHelper *host = F("api.wunderground.com");
 	if (client.connect(host, 80)) {
-		client.print("GET /api/");
+		client.print(F("GET /api/"));
 		client.print(cfg.key);
 		client.print('/');
 		client.print(path);
@@ -431,13 +433,13 @@ bool connect_and_get(WiFiClient &client, const __FlashStringHelper *path) {
 	return false;
 }
 
-static unsigned cbytes = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) +
+const unsigned cbytes = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) +
 			JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
 
-static unsigned fbytes = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) +
+const unsigned fbytes = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) +
 			8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 6150;
 
-void fetch(unsigned now, const __FlashStringHelper *path, unsigned &bytes, unsigned &last_fetch, unsigned interval, void (*f)(JsonObject &)) {
+void fetch(unsigned now, const __FlashStringHelper *path, unsigned bytes, unsigned &last_fetch, unsigned interval, void (*f)(JsonObject &)) {
 	if (now - last_fetch > interval) {
 		unsigned heap = ESP.getFreeHeap();
 		if (heap > bytes) {
@@ -456,8 +458,6 @@ void fetch(unsigned now, const __FlashStringHelper *path, unsigned &bytes, unsig
 					unsigned n = buffer.size();
 					DBG(print(F("Done ")));
 					DBG(println(n));
-					if (n > bytes)
-						bytes = n;
 					last_fetch = now;
 				} else {
 					ERR(println(F("Failed to parse!")));
@@ -483,11 +483,11 @@ void loop() {
 		return;
 
 	static int screen = 0;
-	static uint32_t last_switch = -1000;
+	static uint32_t last_switch;
 	uint32_t now = millis(), ontime = now - display_on;
 	if (fade == cfg.dim) {
 		if (swtch) {
-			display_on = now;
+			display_on = last_switch = now;
 			fade = cfg.bright;
 			if (cfg.dimmable)
 				analogWrite(TFT_LED, fade);
@@ -506,12 +506,13 @@ void loop() {
 			tft.fillScreen(TFT_BLACK);
 			fade = cfg.dim;
 		}
-	} else if (swtch && ontime > 500) {
+	} else if (swtch && now - last_switch > 250) {
 		if (screen >= 5)
 			screen = 0;
 		else
 			screen++;
 		update_display(screen);
+		last_switch = now;
 	}
 	swtch = false;
 
@@ -520,7 +521,5 @@ void loop() {
 			update_display(screen);
 	});
 
-	fetch(now, F("forecast"), fbytes, last_fetch_forecasts, cfg.forecasts_interval, [] (JsonObject &root) {
-		update_forecasts(root);
-	});
+	fetch(now, F("forecast"), fbytes, last_fetch_forecasts, cfg.forecasts_interval, update_forecasts);
 }

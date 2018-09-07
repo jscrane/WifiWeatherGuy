@@ -10,7 +10,7 @@ WeatherGuy for ESP8266.
 ## Software
 - Arduino 1.8.4
 - [ILI9163 library](https://github.com/Bodmer/TFT_eSPI) 1.0.0
-- [ESP8266 for Arduino](https://github.com/esp8266/Arduino.git) 2.4.1
+- [ESP8266 for Arduino](https://github.com/esp8266/Arduino.git) 2.4.2
 - [Arduino ESP8266 filesystem uploader](https://github.com/esp8266/arduino-esp8266fs-plugin)
 - [ArduinoJson](http://arduinojson.org/) 5.13.2
 
