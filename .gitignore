@@ -4,3 +4,5 @@
 *.ino.bin
 *.ino.elf
 spiffs.img
+*.swp
+eagle/WifiWeatherGuy.pro
