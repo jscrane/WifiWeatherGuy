@@ -766,6 +766,7 @@ ESP8266 module</description>
 <wire x1="50.8" y1="30.48" x2="78.74" y2="30.48" width="0.1524" layer="91"/>
 <pinref part="JP2" gate="A" pin="1"/>
 <wire x1="78.74" y1="30.48" x2="78.74" y2="20.32" width="0.1524" layer="91"/>
+<junction x="78.74" y="30.48"/>
 </segment>
 </net>
 <net name="N$9" class="0">
