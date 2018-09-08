@@ -200,6 +200,14 @@ struct Conditions {
 	int wind_degrees;
 } conditions;
 
+struct Statistics {
+	unsigned last_connect;
+	unsigned last_update, max_update, num_updates;
+	unsigned connect_failures;
+	unsigned parse_failures;
+	unsigned mem_failures;
+} stats;
+
 bool update_conditions(JsonObject &root, struct Conditions &c) {
 	JsonObject &current_observation = root[F("current_observation")];
 	if (!current_observation.success())
@@ -207,6 +215,12 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
 	time_t epoch = (time_t)atoi(current_observation[F("observation_epoch")] | "0");
 	if (epoch <= c.epoch)
 		return false;	    
+
+	unsigned last = stats.last_update, now = millis(), update = now - last;
+	stats.num_updates++;
+	stats.last_update = now;
+	if (update > stats.max_update)
+		stats.max_update = update;
 
 	c.epoch = epoch;
 	strlcpy(c.weather, current_observation[F("weather")] | "", sizeof(c.weather));
@@ -392,6 +406,45 @@ void display_forecast(struct Forecast &f) {
 	display_wind(f.wind_degrees, f.ave_wind);
 }
 
+static char *hms(unsigned t) {
+	static char buf[16];
+	t /= 1000;
+	unsigned s = t % 60;
+	t /= 60;
+	unsigned m = t % 60;
+	t /= 60;
+	unsigned h = t;
+	snprintf(buf, sizeof(buf), "%d:%02d:%02d", h, m, s);
+	return buf;
+}
+
+void display_about(struct Statistics &s) {
+	tft.fillScreen(TFT_BLACK);
+	tft.setTextColor(TFT_WHITE);
+	tft.setCursor(1, 1);
+
+	tft.println(F("Weather Guy (c)2018"));
+	tft.print(F("Version: "));
+	tft.println(VERSION);
+	tft.print(F("Up: "));
+	tft.println(hms(millis()));
+	tft.println();
+	tft.print(F("Updates: "));
+	tft.println(s.num_updates);
+	tft.print(F("Last: "));
+	tft.println(hms(s.last_update));
+	tft.print(F("Max: "));
+	tft.println(hms(s.max_update));
+	tft.println();
+	tft.println(F("Failures"));
+	tft.print("Connect: ");
+	tft.println(s.connect_failures);
+	tft.print("Parse:   ");
+	tft.println(s.parse_failures);
+	tft.print("Memory:  ");
+	tft.println(s.mem_failures);
+}
+
 void update_display(int screen) {
 	switch (screen) {
 	case 0:
@@ -405,6 +458,9 @@ void update_display(int screen) {
 	case 4:
 	case 5:
 		display_forecast(forecasts[screen - 2]);
+		break;
+	case 6:
+		display_about(stats);
 		break;
 	}
 }
@@ -462,15 +518,18 @@ void fetch(unsigned now, const __FlashStringHelper *path, unsigned bytes, unsign
 				} else {
 					ERR(println(F("Failed to parse!")));
 					last_fetch += cfg.retry_interval;
+					stats.parse_failures++;
 				}
 			} else {
 				ERR(println(F("Failed to fetch!")));
 				last_fetch += cfg.retry_interval;
+				stats.connect_failures++;
 			}
 			client.stop();
 		} else {
 			DBG(println(F("Insufficient memory to update!")));
 			last_fetch += cfg.retry_interval;
+			stats.mem_failures++;
 		}
 	}
 }
@@ -507,7 +566,7 @@ void loop() {
 			fade = cfg.dim;
 		}
 	} else if (swtch && now - last_switch > 250) {
-		if (screen >= 5)
+		if (screen >= 6)
 			screen = 0;
 		else
 			screen++;
