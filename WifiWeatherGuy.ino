@@ -425,7 +425,7 @@ void display_about(struct Statistics &s) {
 
 	tft.println(F("Weather Guy (c)2018"));
 	tft.print(F("Version: "));
-	tft.println(VERSION);
+	tft.println(F(VERSION));
 	tft.print(F("Up: "));
 	tft.println(hms(millis()));
 	tft.println();
