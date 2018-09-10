@@ -23,7 +23,6 @@ MDNSResponder mdns;
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
 
-uint32_t last_fetch_conditions, last_fetch_forecasts;
 uint32_t display_on;
 uint8_t fade;
 bool connected, debug;
@@ -43,6 +42,53 @@ public:
 
 	void configure(JsonObject &o);
 } cfg;
+
+struct Conditions {
+	char icon[20];
+	char weather[32];
+	int temp, feelslike;
+	int humidity;
+	int wind;
+	int atmos_pressure;
+	int pressure_trend;
+	char wind_dir[10];
+	int sunrise_hour;
+	char sunrise_minute[3];
+	int sunset_hour;
+	char sunset_minute[3];
+	char moonrise_hour[3];
+	char moonrise_minute[3];
+	char moonset_hour[3];
+	char moonset_minute[3];
+	char moon_phase[16];
+	char age_of_moon[3];
+	time_t epoch;
+	char city[48];
+	int wind_degrees;
+} conditions;
+
+struct Forecast {
+	time_t epoch;
+	char day[4];
+	int temp_high;
+	int temp_low;
+	int max_wind;
+	int ave_wind;
+	char wind_dir[8];
+	int wind_degrees;
+	int ave_humidity;
+	char conditions[32];
+	char icon[20];
+} forecasts[4];
+
+struct Statistics {
+	time_t last_age, min_age, max_age, total;
+	uint32_t last_fetch_conditions, last_fetch_forecasts;
+	unsigned num_updates;
+	unsigned connect_failures;
+	unsigned parse_failures;
+	unsigned mem_failures;
+} stats;
 
 void config::configure(JsonObject &o) {
 	strlcpy(ssid, o[F("ssid")] | "", sizeof(ssid));
@@ -170,57 +216,31 @@ void setup() {
 		tft.print(WiFi.localIP());
 		tft.println('/');
 
-		last_fetch_conditions = -cfg.conditions_interval;
-		last_fetch_forecasts = -cfg.forecasts_interval;
+		stats.last_fetch_conditions = -cfg.conditions_interval;
+		stats.last_fetch_forecasts = -cfg.forecasts_interval;
 	}
 	attachInterrupt(SWITCH, []() { swtch=true; }, FALLING);
 }
-
-struct Conditions {
-	char icon[20];
-	char weather[32];
-	int temp, feelslike;
-	int humidity;
-	int wind;
-	int atmos_pressure;
-	int pressure_trend;
-	char wind_dir[10];
-	int sunrise_hour;
-	char sunrise_minute[3];
-	int sunset_hour;
-	char sunset_minute[3];
-	char moonrise_hour[3];
-	char moonrise_minute[3];
-	char moonset_hour[3];
-	char moonset_minute[3];
-	char moon_phase[16];
-	char age_of_moon[3];
-	time_t epoch;
-	char city[48];
-	int wind_degrees;
-} conditions;
-
-struct Statistics {
-	unsigned last_connect;
-	unsigned last_update, max_update, num_updates;
-	unsigned connect_failures;
-	unsigned parse_failures;
-	unsigned mem_failures;
-} stats;
 
 bool update_conditions(JsonObject &root, struct Conditions &c) {
 	JsonObject &current_observation = root[F("current_observation")];
 	if (!current_observation.success())
 		return false;
+
 	time_t epoch = (time_t)atoi(current_observation[F("observation_epoch")] | "0");
 	if (epoch <= c.epoch)
 		return false;	    
 
-	unsigned last = stats.last_update, now = millis(), update = now - last;
 	stats.num_updates++;
-	stats.last_update = now;
-	if (update > stats.max_update)
-		stats.max_update = update;
+	if (c.epoch) {
+		unsigned age = epoch - c.epoch;
+		stats.last_age = age;
+		stats.total += age;
+		if (age > stats.max_age)
+			stats.max_age = age;
+		if (age < stats.min_age || !stats.min_age)
+			stats.min_age = age;
+	}
 
 	c.epoch = epoch;
 	strlcpy(c.weather, current_observation[F("weather")] | "", sizeof(c.weather));
@@ -265,20 +285,6 @@ bool update_conditions(JsonObject &root, struct Conditions &c) {
 	}
 	return true;
 }
-
-struct Forecast {
-	time_t epoch;
-	char day[4];
-	int temp_high;
-	int temp_low;
-	int max_wind;
-	int ave_wind;
-	char wind_dir[8];
-	int wind_degrees;
-	int ave_humidity;
-	char conditions[32];
-	char icon[20];
-} forecasts[4];
 
 void update_forecasts(JsonObject &root) {
 	JsonArray &days = root[F("forecast")][F("simpleforecast")][F("forecastday")];
@@ -406,9 +412,8 @@ void display_forecast(struct Forecast &f) {
 	display_wind(f.wind_degrees, f.ave_wind);
 }
 
-static char *hms(unsigned t) {
+static char *hms(uint32_t t) {
 	static char buf[16];
-	t /= 1000;
 	unsigned s = t % 60;
 	t /= 60;
 	unsigned m = t % 60;
@@ -423,18 +428,27 @@ void display_about(struct Statistics &s) {
 	tft.setTextColor(TFT_WHITE);
 	tft.setCursor(1, 1);
 
+	uint32_t now = millis();
 	tft.println(F("Weather Guy (c)2018"));
 	tft.print(F("Version: "));
 	tft.println(F(VERSION));
-	tft.print(F("Up: "));
-	tft.println(hms(millis()));
+	tft.print(F("Uptime: "));
+	tft.println(hms(now / 1000));
 	tft.println();
 	tft.print(F("Updates: "));
 	tft.println(s.num_updates);
-	tft.print(F("Last: "));
-	tft.println(hms(s.last_update));
+	tft.print(F("Conditions: "));
+	tft.println(hms((now - s.last_fetch_conditions) / 1000));
+	tft.print(F("Forecasts:  "));
+	tft.println(hms((now - s.last_fetch_forecasts) / 1000));
+	tft.print(F("Age: "));
+	tft.println(s.last_age? hms(s.last_age): "");
+	tft.print(F("Min: "));
+	tft.println(s.min_age? hms(s.min_age): "");
 	tft.print(F("Max: "));
-	tft.println(hms(s.max_update));
+	tft.println(s.max_age? hms(s.max_age): "");
+	tft.print(F("Ave: "));
+	tft.println(s.num_updates > 1? hms(s.total / (s.num_updates-1)): "");
 	tft.println();
 	tft.println(F("Failures"));
 	tft.print("Connect: ");
@@ -575,10 +589,10 @@ void loop() {
 	}
 	swtch = false;
 
-	fetch(now, F("astronomy/conditions"), cbytes, last_fetch_conditions, cfg.conditions_interval, [] (JsonObject &root) {
+	fetch(now, F("astronomy/conditions"), cbytes, stats.last_fetch_conditions, cfg.conditions_interval, [] (JsonObject &root) {
 		if (update_conditions(root, conditions) && (cfg.dimmable || fade == cfg.bright))
 			update_display(screen);
 	});
 
-	fetch(now, F("forecast"), fbytes, last_fetch_forecasts, cfg.forecasts_interval, update_forecasts);
+	fetch(now, F("forecast"), fbytes, stats.last_fetch_forecasts, cfg.forecasts_interval, update_forecasts);
 }
