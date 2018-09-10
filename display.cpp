@@ -171,7 +171,7 @@ int val_len(int b) {
 
 void display_time(time_t &epoch, bool metric) {
 	char buf[32];
-	strftime(buf, sizeof(buf), metric? "%H:%S": "%I:%S%p", localtime(&epoch));
+	strftime(buf, sizeof(buf), metric? "%H:%M": "%I:%M%p", localtime(&epoch));
 	tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
 	tft.print(buf);
 	strftime(buf, sizeof(buf), "%a %d", localtime(&epoch));
