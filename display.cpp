@@ -181,7 +181,7 @@ void display_time(time_t &epoch, bool metric) {
 
 void display_wind(int wind_degrees, int wind_speed) {
 	// http://www.iquilezles.org/www/articles/sincos/sincos.htm
-	int rad = tft.width()/3, cx = tft.width()/2, cy = 68;
+	int rad = tft.width()/3, cx = tft.width()/2, cy = WIND_CY;
 	const float a = 0.999847695, b = 0.017452406;
 	// wind dir is azimuthal angle with N at 0
 	float sin = 1.0, cos = 0.0;

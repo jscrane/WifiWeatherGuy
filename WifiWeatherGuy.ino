@@ -334,11 +334,11 @@ void display_weather(struct Conditions &c) {
 		tft.print(F("falling"));
 	}
 
-	tft.setCursor(centre_text(c.city, tft.width()/2, 1), 25);
+	tft.setCursor(centre_text(c.city, tft.width()/2, 1), CITY_Y);
 	tft.print(c.city);
-	tft.setCursor(centre_text(c.weather, tft.width()/2, 1), 34);
+	tft.setCursor(centre_text(c.weather, tft.width()/2, 1), WEATHER_Y);
 	tft.print(c.weather);
-	display_bmp(c.icon, tft.width()/2 - 25, 42);
+	display_bmp(c.icon, tft.width()/2 - 25, ICON_Y);
 
 	display_time(c.epoch, cfg.metric);
 	if (c.wind > 0 && strcmp_P(c.wind_dir, PSTR("Variable")))
@@ -429,7 +429,6 @@ void display_about(struct Statistics &s) {
 	tft.setCursor(1, 1);
 
 	uint32_t now = millis();
-	tft.println(F("Weather Guy (c)2018"));
 	tft.print(F("Version: "));
 	tft.println(F(VERSION));
 	tft.print(F("Uptime: "));

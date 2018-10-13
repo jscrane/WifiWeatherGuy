@@ -1,5 +1,10 @@
 extern TFT_eSPI tft;
 
+#define CITY_Y		26
+#define ICON_Y		34
+#define WIND_CY		60
+#define WEATHER_Y	85
+
 int display_bmp(const char *filename, uint8_t x, uint8_t y);
 void display_humidity(int humidity);
 void display_temperature(int temp, int temp_min, bool metric);
