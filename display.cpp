@@ -194,7 +194,7 @@ void display_wind(int wind_degrees, int wind_speed) {
 	// wind dir rotates clockwise so compensate
 	int ex = cx-rad*cos, ey = cy-rad*sin;
 	tft.fillCircle(ex, ey, 3, TFT_BLACK);
-	tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/50, ey+wind_speed*(cy-ey)/50, TFT_BLACK);
+	tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/ICON_W, ey+wind_speed*(cy-ey)/ICON_W, TFT_BLACK);
 }
 
 void display_wind_speed(int wind_speed, const char *wind_dir, bool metric) {

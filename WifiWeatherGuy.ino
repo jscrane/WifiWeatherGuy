@@ -338,7 +338,7 @@ void display_weather(struct Conditions &c) {
 	tft.print(c.city);
 	tft.setCursor(centre_text(c.weather, tft.width()/2, 1), WEATHER_Y);
 	tft.print(c.weather);
-	display_bmp(c.icon, tft.width()/2 - 25, ICON_Y);
+	display_bmp(c.icon, (tft.width() - ICON_W)/2, ICON_Y);
 
 	display_time(c.epoch, cfg.metric);
 	if (c.wind > 0 && strcmp_P(c.wind_dir, PSTR("Variable")))
@@ -383,9 +383,9 @@ void display_astronomy(struct Conditions &c) {
 	char buf[32];
 	strcpy(buf, "moon");
 	strcat(buf, c.age_of_moon);
-	display_bmp(buf, tft.width()/2 - 25, 42);
+	display_bmp(buf, (tft.width() - ICON_W)/2, 42);
 
-	tft.setCursor(centre_text(c.moon_phase, tft.width()/2, 1), 92);
+	tft.setCursor(centre_text(c.moon_phase, tft.width()/2, 1), MOONAGE_Y);
 	tft.print(c.moon_phase);
 
 	display_time(c.epoch, cfg.metric);
@@ -404,9 +404,9 @@ void display_forecast(struct Forecast &f) {
 	tft.print(f.day);
 
 	tft.setTextSize(1);
-	tft.setCursor(centre_text(f.conditions, tft.width()/2, 1), 34);
+	tft.setCursor(centre_text(f.conditions, tft.width()/2, 1), WEATHER_Y);
 	tft.print(f.conditions);
-	display_bmp(f.icon, tft.width()/2 - 25, 42);
+	display_bmp(f.icon, (tft.width() - ICON_W)/2, ICON_Y);
 
 	display_time(f.epoch, cfg.metric);
 	display_wind(f.wind_degrees, f.ave_wind);
