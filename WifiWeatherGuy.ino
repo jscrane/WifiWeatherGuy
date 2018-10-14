@@ -579,6 +579,7 @@ void loop() {
 			fade = cfg.dim;
 		}
 	} else if (swtch && now - last_switch > 250) {
+		display_on = last_switch = now;
 		if (screen >= 6)
 			screen = 0;
 		else
