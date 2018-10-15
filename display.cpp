@@ -3,8 +3,16 @@
 #include <FS.h>
 #include <time.h>
 #include <TFT_eSPI.h>
+#include "Configuration.h"
 #include "display.h"
 #include "dbg.h"
+
+#define ICON_W		50
+#define ICON_Y		30
+#define WIND_CY		55
+#define CITY_Y		80
+#define WEATHER_Y	90
+#define MOONAGE_Y	WEATHER_Y
 
 // These read 16- and 32-bit types from the SD card file.
 // BMP data is stored little-endian, Arduino is little-endian too.
@@ -22,7 +30,7 @@ static uint32_t read32(File &f) {
 }
 
 // from Adafruit's spitftbitmap ST7735 example
-int display_bmp(const char *filename, uint8_t x, uint8_t y) {
+static int display_bmp(const char *filename, uint8_t x, uint8_t y) {
 	int bmpWidth, bmpHeight;	// W+H in pixels
 	uint8_t	bmpDepth;		// Bit depth (currently must be 24)
 	uint32_t bmpImageoffset;	// Start of image data in file
@@ -152,15 +160,15 @@ int display_bmp(const char *filename, uint8_t x, uint8_t y) {
 	return 0;
 }
 
-int centre_text(const char *s, int x, int size) {
+static int centre_text(const char *s, int x, int size) {
 	return x - (strlen(s) * size * 6) / 2;
 }
 
-int right(int n, int x, int size) {
+static int right(int n, int x, int size) {
 	return x - n * size * 6;
 }
 
-int val_len(int b) {
+static int val_len(int b) {
 	if (b >= 1000) return 4;
 	if (b >= 100) return 3;
 	if (b >= 10) return 2;
@@ -169,7 +177,7 @@ int val_len(int b) {
 	return 3;
 }
 
-void display_time(time_t &epoch, bool metric) {
+static void display_time(time_t &epoch, bool metric) {
 	char buf[32];
 	strftime(buf, sizeof(buf), metric? "%H:%M": "%I:%M%p", localtime(&epoch));
 	tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
@@ -179,7 +187,7 @@ void display_time(time_t &epoch, bool metric) {
 	tft.print(buf);
 }
 
-void display_wind(int wind_degrees, int wind_speed) {
+static void display_wind(int wind_degrees, int wind_speed) {
 	// http://www.iquilezles.org/www/articles/sincos/sincos.htm
 	int rad = tft.width()/3, cx = tft.width()/2, cy = WIND_CY;
 	const float a = 0.999847695, b = 0.017452406;
@@ -197,7 +205,7 @@ void display_wind(int wind_degrees, int wind_speed) {
 	tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/ICON_W, ey+wind_speed*(cy-ey)/ICON_W, TFT_BLACK);
 }
 
-void display_wind_speed(int wind_speed, const char *wind_dir, bool metric) {
+static void display_wind_speed(int wind_speed, const char *wind_dir, bool metric) {
 	tft.setTextSize(2);
 	tft.setCursor(1, 1);
 	tft.print(wind_speed);
@@ -207,7 +215,7 @@ void display_wind_speed(int wind_speed, const char *wind_dir, bool metric) {
 	tft.print(wind_dir);
 }
 
-void display_temperature(int temp, int temp_min, bool metric) {
+static void display_temperature(int temp, int temp_min, bool metric) {
 	tft.setTextSize(2);
 	tft.setCursor(1, tft.height() - 16);
 	tft.print(temp);
@@ -219,7 +227,7 @@ void display_temperature(int temp, int temp_min, bool metric) {
 	}
 }
 
-void display_humidity(int humidity) {
+static void display_humidity(int humidity) {
 	tft.setTextSize(2);
 	tft.setCursor(right(val_len(humidity), tft.width(), 2) - 6, tft.height() - 16);
 	tft.print(humidity);
@@ -228,3 +236,147 @@ void display_humidity(int humidity) {
 	tft.print('%');
 }
 
+void display_weather(struct Conditions &c) {
+	tft.fillScreen(TFT_WHITE);
+	tft.setTextColor(TFT_BLACK);
+
+	display_wind_speed(c.wind, c.wind_dir, cfg.metric? F("kph"): F("mph"));
+	display_temperature(c.temp, c.feelslike, cfg.metric);
+	display_humidity(c.humidity);
+
+	tft.setTextSize(2);
+	tft.setCursor(right(val_len(c.atmos_pressure), tft.width(), 2)-12, 1);
+	tft.print(c.atmos_pressure);
+	tft.setTextSize(1);
+	tft.print(cfg.metric? F("mb"): F("in"));
+	if (c.pressure_trend == 1) {
+		tft.setCursor(right(6, tft.width(), 1), 17);
+		tft.print(F("rising"));
+	} else if (c.pressure_trend == -1) {
+		tft.setCursor(right(7, tft.width(), 1), 17);
+		tft.print(F("falling"));
+	}
+
+	tft.setCursor(centre_text(c.city, tft.width()/2, 1), CITY_Y);
+	tft.print(c.city);
+	tft.setCursor(centre_text(c.weather, tft.width()/2, 1), WEATHER_Y);
+	tft.print(c.weather);
+	display_bmp(c.icon, (tft.width() - ICON_W)/2, ICON_Y);
+
+	display_time(c.epoch, cfg.metric);
+	if (c.wind > 0 && strcmp_P(c.wind_dir, PSTR("Variable")))
+		display_wind(c.wind_degrees, c.wind);
+}
+
+void display_astronomy(struct Conditions &c) {
+	tft.fillScreen(TFT_BLACK);
+	tft.setTextColor(TFT_WHITE);
+
+	tft.setTextSize(2);
+	tft.setCursor(1, 1);
+	tft.print(F("sun"));
+	tft.setCursor(right(4, tft.width(), 2), 1);
+	tft.print(F("moon"));
+	tft.setTextSize(1);
+	tft.setCursor(c.sunrise_hour < 10? 7: 1, 17);
+	tft.print(c.sunrise_hour);
+	tft.print(':');
+	tft.print(c.sunrise_minute);
+	tft.setCursor(1, 25);
+	tft.print(c.sunset_hour);
+	tft.print(':');
+	tft.print(c.sunset_minute);
+
+	const char *rise = "rise";
+	tft.setCursor(centre_text(rise, tft.width()/2, 1), 17);
+	tft.print(rise);
+	const char *set = "set";
+	tft.setCursor(centre_text(set, tft.width()/2, 1), 25);
+	tft.print(set);
+
+	tft.setCursor(right(3 + strlen(c.moonrise_hour), tft.width(), 1), 17);
+	tft.print(c.moonrise_hour);
+	tft.print(':');
+	tft.print(c.moonrise_minute);
+	tft.setCursor(right(3 + strlen(c.moonset_hour), tft.width(), 1), 25);
+	tft.print(c.moonset_hour);
+	tft.print(':');
+	tft.print(c.moonset_minute);
+
+	char buf[32];
+	strcpy(buf, "moon");
+	strcat(buf, c.age_of_moon);
+	display_bmp(buf, (tft.width() - ICON_W)/2, 42);
+
+	tft.setCursor(centre_text(c.moon_phase, tft.width()/2, 1), MOONAGE_Y);
+	tft.print(c.moon_phase);
+
+	display_time(c.epoch, cfg.metric);
+}
+
+void display_forecast(struct Forecast &f) {
+	tft.fillScreen(TFT_WHITE);
+	tft.setTextColor(TFT_BLACK);
+
+	display_wind_speed(f.ave_wind, f.wind_dir, cfg.metric);
+	display_temperature(f.temp_high, f.temp_low, cfg.metric);
+	display_humidity(f.ave_humidity);
+
+	tft.setTextSize(2);
+	tft.setCursor(right(3, tft.width(), 2), 1);
+	tft.print(f.day);
+
+	tft.setTextSize(1);
+	tft.setCursor(centre_text(f.conditions, tft.width()/2, 1), WEATHER_Y);
+	tft.print(f.conditions);
+	display_bmp(f.icon, (tft.width() - ICON_W)/2, ICON_Y);
+
+	display_time(f.epoch, cfg.metric);
+	display_wind(f.wind_degrees, f.ave_wind);
+}
+
+static char *hms(uint32_t t) {
+	static char buf[16];
+	unsigned s = t % 60;
+	t /= 60;
+	unsigned m = t % 60;
+	t /= 60;
+	unsigned h = t;
+	snprintf(buf, sizeof(buf), "%d:%02d:%02d", h, m, s);
+	return buf;
+}
+
+void display_about(struct Statistics &s) {
+	tft.fillScreen(TFT_BLACK);
+	tft.setTextColor(TFT_WHITE);
+	tft.setCursor(1, 1);
+
+	uint32_t now = millis();
+	tft.print(F("Version: "));
+	tft.println(F(VERSION));
+	tft.print(F("Uptime: "));
+	tft.println(hms(now / 1000));
+	tft.println();
+	tft.print(F("Updates: "));
+	tft.println(s.num_updates);
+	tft.print(F("Conditions: "));
+	tft.println(hms((now - s.last_fetch_conditions) / 1000));
+	tft.print(F("Forecasts:  "));
+	tft.println(hms((now - s.last_fetch_forecasts) / 1000));
+	tft.print(F("Age: "));
+	tft.println(s.last_age? hms(s.last_age): "");
+	tft.print(F("Min: "));
+	tft.println(s.min_age? hms(s.min_age): "");
+	tft.print(F("Max: "));
+	tft.println(s.max_age? hms(s.max_age): "");
+	tft.print(F("Ave: "));
+	tft.println(s.num_updates > 1? hms(s.total / (s.num_updates-1)): "");
+	tft.println();
+	tft.println(F("Failures"));
+	tft.print("Connect: ");
+	tft.println(s.connect_failures);
+	tft.print("Parse:   ");
+	tft.println(s.parse_failures);
+	tft.print("Memory:  ");
+	tft.println(s.mem_failures);
+}
