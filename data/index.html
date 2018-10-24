@@ -12,6 +12,7 @@ function load_config() {
     response.json().then(function(data) {
       Transparency.render(document.getElementById('config'), data);
       chk_dimmable();
+      chk_nearest();
     });
   }).catch(function(err) {
     console.log('Fetch error :-S', err);
