@@ -39,6 +39,10 @@ function chk_dimmable() {
   document.getElementById('bright').disabled = !val;
   document.getElementById('dim').disabled = !val;
 }
+function chk_nearest() {
+  val = document.getElementById('nearest').checked;
+  document.getElementById('station').disabled = val;
+}
 </script>
 </head>
 <body onload="load_config()">
@@ -58,6 +62,10 @@ function chk_dimmable() {
   <tr>
     <td>Key:</td>
     <td><input type="text" id="key"></td>
+  </tr>
+  <tr>
+    <td>Nearest:</td>
+    <td><input type="checkbox" id="nearest" onclick="chk_nearest()"></td>
   </tr>
   <tr>
     <td>Station:</td>

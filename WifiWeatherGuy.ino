@@ -25,7 +25,7 @@ ESP8266HTTPUpdateServer httpUpdater;
 
 uint32_t display_on;
 uint8_t fade;
-bool connected, debug;
+bool connected, debug, is_geo;
 
 config cfg;
 struct Conditions conditions;
@@ -42,6 +42,7 @@ void config::configure(JsonObject &o) {
 	forecasts_interval = 1000 * (int)o[F("forecasts_interval")];
 	metric = o[F("metric")];
 	dimmable = o[F("dimmable")];
+	nearest = o[F("nearest")];
 	on_time = 1000 * (int)o[F("display")];
 	bright = o[F("bright")];
 	dim = o[F("dim")];
@@ -86,7 +87,10 @@ void setup() {
 	tft.print(F("key: "));
 	tft.println(cfg.key);
 	tft.print(F("station: "));
-	tft.println(cfg.station);
+	if (cfg.nearest)
+		tft.println(F("nearest"));
+	else
+		tft.println(cfg.station);
 	tft.print(F("hostname: "));
 	tft.println(cfg.hostname);
 	tft.print(F("condition...: "));
@@ -158,6 +162,35 @@ void setup() {
 		tft.print(WiFi.localIP());
 		tft.println('/');
 
+		if (cfg.nearest) {
+			WiFiClient client;
+			const __FlashStringHelper *host = F("ip-api.com");
+			if (client.connect(host, 80)) {
+				client.print(F("GET /json HTTP/1.1\r\nHost: "));
+				client.print(host);
+				client.print(F("\r\nConnection: close\r\n\r\n"));
+				if (client.connected()) {
+					unsigned long now = millis();
+					while (!client.available())
+						if (millis() - now > 5000)
+							goto cont;
+					client.find("\r\n\r\n");
+
+					const size_t size = JSON_OBJECT_SIZE(14) + 290;
+					DynamicJsonBuffer buf(size);
+					JsonObject &geo = buf.parseObject(client);
+					if (geo.success()) {
+						// if success, decode...
+						float lat = geo["lat"];
+						float lon = geo["lon"];
+						snprintf(cfg.station, sizeof(cfg.station), "%f,%f", lat, lon);
+						DBG(println(cfg.station));
+						is_geo = true;
+					}
+				}
+			}
+		}
+cont:
 		stats.last_fetch_conditions = -cfg.conditions_interval;
 		stats.last_fetch_forecasts = -cfg.forecasts_interval;
 	}
@@ -281,6 +314,8 @@ bool connect_and_get(WiFiClient &client, const __FlashStringHelper *path) {
 		client.print(F("GET /api/"));
 		client.print(cfg.key);
 		client.print('/');
+		if (is_geo)
+			client.print(F("geolookup/"));
 		client.print(path);
 		client.print(F("/q/"));
 		client.print(cfg.station);

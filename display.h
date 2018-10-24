@@ -10,7 +10,7 @@ public:
 	char key[17];
 	char station[33];
 	char hostname[17];
-	bool metric, dimmable;
+	bool metric, dimmable, nearest;
 	uint32_t conditions_interval, forecasts_interval;
 	uint32_t on_time, retry_interval;
 	uint16_t bright, dim;
