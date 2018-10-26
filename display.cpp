@@ -8,11 +8,7 @@
 #include "dbg.h"
 
 #define ICON_W		50
-#define ICON_Y		30
-#define WIND_CY		55
-#define CITY_Y		80
-#define WEATHER_Y	90
-#define MOONAGE_Y	WEATHER_Y
+#define ICON_H		ICON_W
 
 // These read 16- and 32-bit types from the SD card file.
 // BMP data is stored little-endian, Arduino is little-endian too.
@@ -180,16 +176,18 @@ static int val_len(int b) {
 static void display_time(time_t &epoch, bool metric) {
 	char buf[32];
 	strftime(buf, sizeof(buf), metric? "%H:%M": "%I:%M%p", localtime(&epoch));
-	tft.setCursor(centre_text(buf, tft.width()/2, 1), 109);
+	tft.setCursor(centre_text(buf, tft.width()/2, 1), tft.height() - 20);
 	tft.print(buf);
 	strftime(buf, sizeof(buf), "%a %d", localtime(&epoch));
-	tft.setCursor(centre_text(buf, tft.width()/2, 1), 118);
+	tft.setCursor(centre_text(buf, tft.width()/2, 1), tft.height() - 10);
 	tft.print(buf);
 }
 
 static void display_wind(int wind_degrees, int wind_speed) {
 	// http://www.iquilezles.org/www/articles/sincos/sincos.htm
-	int rad = tft.width()/3, cx = tft.width()/2, cy = WIND_CY;
+	int w = tft.width(), h = tft.height();
+	int rad = w > h? h/3: w/3;
+	int cx = w/2, cy = h/2;
 	const float a = 0.999847695, b = 0.017452406;
 	// wind dir is azimuthal angle with N at 0
 	float sin = 1.0, cos = 0.0;
@@ -202,7 +200,7 @@ static void display_wind(int wind_degrees, int wind_speed) {
 	// wind dir rotates clockwise so compensate
 	int ex = cx-rad*cos, ey = cy-rad*sin;
 	tft.fillCircle(ex, ey, 3, TFT_BLACK);
-	tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/ICON_W, ey+wind_speed*(cy-ey)/ICON_W, TFT_BLACK);
+	tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/ICON_W, ey+wind_speed*(cy-ey)/ICON_H, TFT_BLACK);
 }
 
 static void display_wind_speed(int wind_speed, const char *wind_dir, bool metric) {
@@ -257,11 +255,12 @@ void display_weather(struct Conditions &c) {
 		tft.print(F("falling"));
 	}
 
-	tft.setCursor(centre_text(c.city, tft.width()/2, 1), CITY_Y);
+	unsigned by = (tft.height() - ICON_H)/2, cy = by - 10, wy = by + ICON_H;
+	tft.setCursor(centre_text(c.city, tft.width()/2, 1), cy);
 	tft.print(c.city);
-	tft.setCursor(centre_text(c.weather, tft.width()/2, 1), WEATHER_Y);
+	tft.setCursor(centre_text(c.weather, tft.width()/2, 1), wy);
 	tft.print(c.weather);
-	display_bmp(c.icon, (tft.width() - ICON_W)/2, ICON_Y);
+	display_bmp(c.icon, (tft.width() - ICON_W)/2, by);
 
 	display_time(c.epoch, cfg.metric);
 	if (c.wind > 0 && strcmp_P(c.wind_dir, PSTR("Variable")))
@@ -306,9 +305,10 @@ void display_astronomy(struct Conditions &c) {
 	char buf[32];
 	strcpy(buf, "moon");
 	strcat(buf, c.age_of_moon);
-	display_bmp(buf, (tft.width() - ICON_W)/2, 42);
+	unsigned by = (tft.height() - ICON_H)/2, ay = by + ICON_H;
+	display_bmp(buf, (tft.width() - ICON_W)/2, by);
 
-	tft.setCursor(centre_text(c.moon_phase, tft.width()/2, 1), MOONAGE_Y);
+	tft.setCursor(centre_text(c.moon_phase, tft.width()/2, 1), ay);
 	tft.print(c.moon_phase);
 
 	display_time(c.epoch, cfg.metric);
@@ -327,9 +327,11 @@ void display_forecast(struct Forecast &f) {
 	tft.print(f.day);
 
 	tft.setTextSize(1);
-	tft.setCursor(centre_text(f.conditions, tft.width()/2, 1), WEATHER_Y);
+	unsigned by = (tft.height() - ICON_H)/2, wy = by + ICON_H;
+	display_bmp(f.icon, (tft.width() - ICON_W)/2, by);
+
+	tft.setCursor(centre_text(f.conditions, tft.width()/2, 1), wy);
 	tft.print(f.conditions);
-	display_bmp(f.icon, (tft.width() - ICON_W)/2, ICON_Y);
 
 	display_time(f.epoch, cfg.metric);
 	display_wind(f.wind_degrees, f.ave_wind);
