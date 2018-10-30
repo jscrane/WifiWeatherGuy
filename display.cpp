@@ -219,7 +219,7 @@ static void display_temperature(int temp, int temp_min, bool metric) {
 	tft.print(temp);
 	tft.setTextSize(1);
 	tft.print(metric? 'C': 'F');
-	if (temp != temp_min) {
+	if (temp > temp_min) {
 		tft.setCursor(1, tft.height() - 24);
 		tft.print(temp_min);
 	}
