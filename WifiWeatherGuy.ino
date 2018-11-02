@@ -13,8 +13,8 @@
 #include "display.h"
 #include "dbg.h"
 
-#define CS	D6
-#define DC	D8
+#define CS	TFT_CS
+#define DC	TFT_DC
 #define TFT_LED	D2
 #define SWITCH	D3
 
