@@ -5,6 +5,7 @@
 #include <Adafruit_GFX.h>
 #include <TFT_eSPI.h>
 #include <ESP8266WiFi.h>
+#include <DNSServer.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
@@ -22,6 +23,7 @@ TFT_eSPI tft;
 MDNSResponder mdns;
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
+DNSServer dnsServer;
 
 uint32_t display_on;
 uint8_t fade;
@@ -151,6 +153,7 @@ void setup() {
 		tft.println(F("Connect to SSID"));
 		tft.println(cfg.hostname);
 		tft.println(F("to configure WiFi"));
+		dnsServer.start(53, "*", WiFi.softAPIP());
 	} else {
 		DBG(println());
 		DBG(print(F("Connected to ")));
@@ -383,8 +386,10 @@ void loop() {
 	mdns.update();
 
 	server.handleClient();
-	if (!connected)
+	if (!connected) {
+		dnsServer.processNextRequest();
 		return;
+	}
 
 	static int screen = 0;
 	static uint32_t last_switch;
