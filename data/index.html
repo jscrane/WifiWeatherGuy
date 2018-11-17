@@ -1,5 +1,7 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <title>Configuration</title>
 <script src="/js/transparency.min.js"></script>
 <script>
@@ -31,9 +33,9 @@ function save_config() {
     return data;
   }, {});
   xhr = new XMLHttpRequest();
-  xhr.open("POST", '/config', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.send(JSON.stringify(data, null, "  "));
+  xhr.open("POST", "/config", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.send(JSON.stringify(data));
 }
 function chk_dimmable() {
   val = document.getElementById('dimmable').checked;
