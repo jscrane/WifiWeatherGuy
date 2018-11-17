@@ -131,6 +131,7 @@ void setup() {
 			File f = SPIFFS.open(config_file, "w");
 			f.print(body);
 			f.close();
+			server.send(200);
 			ESP.restart();
 		} else
 			server.send(400, "text/plain", "No body!");
