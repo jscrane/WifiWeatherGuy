@@ -9,4 +9,4 @@ CPPFLAGS = -DVERSION=\"${shell date +%F}\" \
 FLASH_SIZE := 4M1M
 BUILD_FCPU := 80000000L
 
-include arduino-esp.mk
+include arduino-esp8266.mk
