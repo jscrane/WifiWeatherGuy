@@ -15,6 +15,14 @@ sketch is useful to identify chipsets in various cheap 1.44" TFT displays.
 KMR1441_SPI V2
 --------------
 The backlight LED doesn't seem to be variable with PWM on this board.
+Set CPPFLAGS to this in the Makefile for this display:
+
+```
+CPPFLAGS = -DVERSION=\"${shell date +%F}\" -DST7735_GREENTAB \
+	-DUSER_SETUP_LOADED -DST7735_DRIVER -DTFT_WIDTH=128 -DTFT_HEIGHT=128 \
+	-DTFT_CS=PIN_D6 -DTFT_DC=PIN_D8 \
+	-DTFT_RST=-1 -DSPI_FREQUENCY=27000000 -DLOAD_GLCD
+```
 
 ```
 Bi-directional Read registers
