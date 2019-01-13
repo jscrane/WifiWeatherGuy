@@ -57,62 +57,77 @@ function chk_nearest() {
   <tr>
     <td>SSID:</td>
     <td><input type="text" id="ssid"></td>
+    <td><img src="info.png" title="Your Wifi network name"/></td>
   </tr>
   <tr>
     <td>Password:</td>
     <td><input type="text" id="password"></td>
+    <td><img src="info.png" title="Your Wifi network password"/></td>
   </tr>
   <tr>
-    <td>Key:</td>
+    <td>Wunderground Key:</td>
     <td><input type="text" id="key"></td>
+    <td><img src="info.png" title="Your Wunderground API Key"/></td>
   </tr>
   <tr>
     <td>Nearest:</td>
     <td><input type="checkbox" id="nearest" onclick="chk_nearest()"></td>
+    <td><img src="info.png" title="Whether to use the nearest Weather Station"/></td>
   </tr>
   <tr>
     <td>Station:</td>
     <td><input type="text" id="station"></td>
+    <td><img src="info.png" title="Weather Station to use"/></td>
   </tr>
   <tr>
     <td>Hostname:</td>
     <td><input type="text" id="hostname"></td>
+    <td><img src="info.png" title="My hostname on your network"/></td>
   </tr>
   <tr>
     <td>Metric:</td>
     <td><input type="checkbox" id="metric"></td>
+    <td><img src="info.png" title="Use Metric (or Imperial) units"/></td>
   </tr>
   <tr>
     <td>Update Conditions:</td>
     <td><input type="number" min=0 id="conditions_interval"></td>
+    <td><img src="info.png" title="Update interval for current conditions"/></td>
   </tr>
   <tr>
     <td>Update Forecasts:</td>
     <td><input type="number" min=0 id="forecasts_interval"></td>
+    <td><img src="info.png" title="Update interval for forecasts"/></td>
   </tr>
   <tr>
     <td>Retry Interval:</td>
     <td><input type="number" min="0" id="retry_interval"></td>
+    <td><img src="info.png" title="Seconds to wait before retrying on failure"/></td>
   </tr>
   <tr>
     <td>Display On:</td>
     <td><input type="number" min=0 id="display"></td>
+    <td><img src="info.png" title="Seconds display stays on after button press"/></td>
   </tr>
   <tr>
     <td>Dimmable:</td>
     <td><input type="checkbox" id="dimmable" onclick="chk_dimmable()"></td>
+    <td><img src="info.png" title="Whether display is dimmable by PWM"/></td>
   </tr>
   <tr>
     <td>Brightness:</td>
     <td><input type="number" min="0" max="1023" id="bright"></td>
+    <td><img src="info.png" title="Brightness of display when on"/></td>
   </tr>
   <tr>
     <td>Dim:</td>
     <td><input type="number" min="0" max="1023" id="dim"></td>
+    <td><img src="info.png" title="Dimness of display when off"/></td>
   </tr>
   <tr>
     <td>Rotate:</td>
     <td><input type="number" min="0" max="3" id="rotate"></td>
+    <td><img src="info.png" title="Display rotation (0-3)"/></td>
   </tr>
   <tr>
     <td colspan="2" align="center">

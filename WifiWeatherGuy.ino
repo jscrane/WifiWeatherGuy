@@ -139,6 +139,7 @@ void setup() {
 	server.serveStatic("/", SPIFFS, "/index.html");
 	server.serveStatic("/config", SPIFFS, config_file);
 	server.serveStatic("/js/transparency.min.js", SPIFFS, "/transparency.min.js");
+	server.serveStatic("/info.png", SPIFFS, "/info.png");
 
 	httpUpdater.setup(&server);
 	server.begin();
