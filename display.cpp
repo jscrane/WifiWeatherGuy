@@ -338,13 +338,16 @@ void display_forecast(struct Forecast &f) {
 }
 
 static char *hms(uint32_t t) {
-	static char buf[16];
+	static char buf[32];
 	unsigned s = t % 60;
 	t /= 60;
 	unsigned m = t % 60;
 	t /= 60;
 	unsigned h = t;
-	snprintf(buf, sizeof(buf), "%d:%02d:%02d", h, m, s);
+	if (h >= 24)
+		snprintf(buf, sizeof(buf), "%dd %d:%02d:%02d", h/24, h % 24, m, s);
+	else
+		snprintf(buf, sizeof(buf), "%d:%02d:%02d", h, m, s);
 	return buf;
 }
 
