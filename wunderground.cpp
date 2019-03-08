@@ -6,7 +6,7 @@
 #include "Configuration.h"
 #include "dbg.h"
 #include "state.h"
-#include "wunderground.h"
+#include "providers.h"
 
 static bool update_conditions(JsonObject &root, struct Conditions &c) {
 	JsonObject &current_observation = root[F("current_observation")];

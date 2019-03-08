@@ -13,7 +13,7 @@
 #include "state.h"
 #include "display.h"
 #include "dbg.h"
-#include "wunderground.h"
+#include "providers.h"
 
 #define TFT_LED	D2
 #define SWITCH	D3
@@ -33,6 +33,7 @@ struct Conditions conditions;
 struct Forecast forecasts[4];
 struct Statistics stats;
 Wunderground wunderground;
+Provider &provider = wunderground;
 
 void config::configure(JsonObject &o) {
 	strlcpy(ssid, o[F("ssid")] | "", sizeof(ssid));
@@ -270,7 +271,7 @@ void loop() {
 
 	if (now - stats.last_fetch_conditions > cfg.conditions_interval) {
 		DBG(print(F("Updating conditions")));
-		if (wunderground.fetch_conditions(conditions)) {
+		if (provider.fetch_conditions(conditions)) {
 			if (cfg.dimmable || fade == cfg.bright)
 				update_display(screen);
 			stats.last_fetch_conditions = now;
@@ -280,7 +281,7 @@ void loop() {
 
 	if (now - stats.last_fetch_forecasts > cfg.forecasts_interval) {
 		DBG(print(F("Updating forecasts")));
-		if (wunderground.fetch_forecasts(&forecasts[0], sizeof(forecasts)/sizeof(forecasts[0])))
+		if (provider.fetch_forecasts(&forecasts[0], sizeof(forecasts)/sizeof(forecasts[0])))
 			stats.last_fetch_forecasts = now;
 		else
 			stats.last_fetch_forecasts += cfg.retry_interval;
