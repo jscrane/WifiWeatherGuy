@@ -6,6 +6,7 @@
 #include "Configuration.h"
 #include "display.h"
 #include "dbg.h"
+#include "state.h"
 
 #define ICON_W		50
 #define ICON_H		ICON_W
