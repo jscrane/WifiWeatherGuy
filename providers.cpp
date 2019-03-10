@@ -6,7 +6,7 @@
 #include "dbg.h"
 
 bool Provider::connect_and_get(WiFiClient &client, const char *host,  const __FlashStringHelper *path) {
-	if (!client.connect(host, 80)) {
+	if (client.connect(host, 80)) {
 		client.print(F("GET "));
 
 		on_connect(client, path);

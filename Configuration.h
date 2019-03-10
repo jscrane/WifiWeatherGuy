@@ -13,7 +13,7 @@ class config: public Configuration {
 public:
 	char ssid[33];
 	char password[33];
-	char key[17];
+	char key[33];
 	char station[33];
 	char hostname[17];
 	bool metric, dimmable, nearest;

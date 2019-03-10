@@ -97,8 +97,12 @@ static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
 	int cnt = root[F("cnt")];
 	JsonArray &list = root[F("list")];
 
+	root.printTo(Serial);
 	for (int i = 0; i < n && i < cnt; i++) {
+	Serial.println(i);
 		JsonObject &day = list[i];
+		if (!day.success())
+			break;
 		struct Forecast &f = fs[i];
 		f.epoch = day[F("dt")];
 		f.ave_humidity = day[F("humidity")];
@@ -121,7 +125,7 @@ bool OpenWeatherMap::fetch_forecasts(struct Forecast forecasts[], int days) {
 	WiFiClient client;
 	bool ret = false;
 
-	if (connect_and_get(client, host, F("forecast/daily"))) {
+	if (connect_and_get(client, host, F("forecast"))) {
 		DynamicJsonBuffer buffer(fbytes);
 		JsonObject &root = buffer.parseObject(client);
 		if (ret = root.success()) {

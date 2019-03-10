@@ -121,6 +121,7 @@ void setup() {
 		for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) {
 			delay(500);
 			tft.print('.');
+			DBG(print('.'));
 		}
 		connected = WiFi.status() == WL_CONNECTED;
 	}
