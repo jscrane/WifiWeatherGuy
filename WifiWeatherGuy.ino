@@ -32,8 +32,7 @@ config cfg;
 struct Conditions conditions;
 struct Forecast forecasts[4];
 struct Statistics stats;
-Wunderground wunderground;
-Provider &provider = wunderground;
+PROVIDER provider;
 
 void config::configure(JsonObject &o) {
 	strlcpy(ssid, o[F("ssid")] | "", sizeof(ssid));

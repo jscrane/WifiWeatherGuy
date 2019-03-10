@@ -281,10 +281,12 @@ void display_astronomy(struct Conditions &c) {
 	tft.setCursor(c.sunrise_hour < 10? 7: 1, 17);
 	tft.print(c.sunrise_hour);
 	tft.print(':');
+	if (c.sunrise_minute < 10) tft.print('0');
 	tft.print(c.sunrise_minute);
 	tft.setCursor(1, 25);
 	tft.print(c.sunset_hour);
 	tft.print(':');
+	if (c.sunset_minute < 10) tft.print('0');
 	tft.print(c.sunset_minute);
 
 	const char *rise = "rise";

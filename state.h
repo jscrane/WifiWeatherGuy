@@ -1,25 +1,25 @@
+#ifndef __STATE_H__
+#define __STATE_H__
+
 struct Conditions {
+	time_t epoch;
+	char city[48];
 	char icon[20];
 	char weather[32];
 	int temp, feelslike;
 	int humidity;
-	int wind;
+	int wind, wind_degrees;
 	int atmos_pressure;
 	int pressure_trend;
 	char wind_dir[10];
-	int sunrise_hour;
-	char sunrise_minute[3];
-	int sunset_hour;
-	char sunset_minute[3];
+	int sunrise_hour, sunrise_minute;
+	int sunset_hour, sunset_minute;
 	char moonrise_hour[3];
 	char moonrise_minute[3];
 	char moonset_hour[3];
 	char moonset_minute[3];
 	char moon_phase[16];
 	char age_of_moon[3];
-	time_t epoch;
-	char city[48];
-	int wind_degrees;
 };
 
 struct Forecast {
@@ -43,6 +43,17 @@ struct Statistics {
 	unsigned connect_failures;
 	unsigned parse_failures;
 	unsigned mem_failures;
+
+	void update(time_t age) {
+		last_age = age;
+		total += age;
+		if (age > max_age)
+			max_age = age;
+		if (age < min_age || !min_age)
+			min_age = age;
+	}
 };
 
 extern struct Statistics stats;
+
+#endif
