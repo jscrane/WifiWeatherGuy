@@ -187,10 +187,8 @@ void setup() {
 					JsonObject &geo = buf.parseObject(client);
 					if (geo.success()) {
 						// if success, decode...
-						float lat = geo["lat"];
-						float lon = geo["lon"];
-						snprintf(cfg.station, sizeof(cfg.station), "%f,%f", lat, lon);
-						DBG(println(cfg.station));
+						cfg.lat = geo["lat"];
+						cfg.lon = geo["lon"];
 						is_geo = true;
 					}
 				}

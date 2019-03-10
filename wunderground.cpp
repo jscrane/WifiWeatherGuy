@@ -95,14 +95,22 @@ static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
 }
 
 void Wunderground::on_connect(WiFiClient &client, const __FlashStringHelper *path) {
+	char loc[sizeof(cfg.station)];
+
 	client.print(F("/api/"));
 	client.print(cfg.key);
 	client.print('/');
-	if (cfg.nearest)
+
+	if (cfg.nearest) {
 		client.print(F("geolookup/"));
+		snprintf(loc, sizeof(loc), "%f,%f", cfg.lat, cfg.lon);
+	} else
+		strncpy(loc, cfg.station, sizeof(loc));
+	DBG(println(loc));
+
 	client.print(path);
 	client.print(F("/q/"));
-	client.print(cfg.station);
+	client.print(loc);
 	client.print(F(".json"));
 }
 

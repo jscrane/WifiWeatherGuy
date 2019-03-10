@@ -13,14 +13,24 @@ const char host[] PROGMEM = "api.openweathermap.org";
 void OpenWeatherMap::on_connect(WiFiClient &client, const __FlashStringHelper *path) {
 	client.print(F("/data/2.5/"));
 	client.print(path);
-	client.print(F("?q="));
-	client.print(cfg.station);
+
+	if (cfg.nearest) {
+		client.print(F("?lat="));
+		client.print(cfg.lat);
+		client.print(F("&lon="));
+		client.print(cfg.lon);
+	} else {
+		client.print(F("?q="));
+		client.print(cfg.station);
+	}
+
 	client.print(F("&appid="));
 	client.print(cfg.key);
+	client.print(F("&units="));
 	if (cfg.metric)
-		client.print(F("&units=metric"));
+		client.print(F("metric"));
 	else
-		client.print(F("&units=imperial"));
+		client.print(F("imperial"));
 }
 
 static bool update_conditions(JsonObject &root, struct Conditions &c) {

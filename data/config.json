@@ -1,9 +1,9 @@
 {
  "ssid": "",
  "password": "",
- "key": "7ecb9b676eba3283",
- "nearest": true,
- "station": "EIME",
+ "key": "",
+ "nearest": false,
+ "station": "",
  "hostname": "WifiWeatherGuy",
  "metric": 1,
  "conditions_interval": 1200,

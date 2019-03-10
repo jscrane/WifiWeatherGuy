@@ -21,6 +21,7 @@ public:
 	uint32_t on_time, retry_interval;
 	uint16_t bright, dim;
 	uint8_t rotate;
+	float lat, lon;
 
 	void configure(class JsonObject &o);
 };
