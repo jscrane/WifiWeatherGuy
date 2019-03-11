@@ -29,7 +29,7 @@ struct Forecast {
 	int max_wind;
 	int ave_wind;
 	int wind_degrees;
-	int ave_humidity;
+	int humidity;
 	char conditions[32];
 	char icon[20];
 };

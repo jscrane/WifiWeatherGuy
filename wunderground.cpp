@@ -85,7 +85,7 @@ static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
 				f.max_wind = day[F("maxwind")][F("mph")];
 				f.ave_wind = day[F("avewind")][F("mph")];
 			}
-			f.ave_humidity = day[F("avehumidity")];
+			f.humidity = day[F("avehumidity")];
 			f.wind_degrees = day[F("avewind")][F("degrees")];
 			strlcpy(f.conditions, day[F("conditions")] | "", sizeof(f.conditions));
 			strlcpy(f.icon, day[F("icon")] | "", sizeof(f.icon));

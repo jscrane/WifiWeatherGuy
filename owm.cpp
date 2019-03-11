@@ -9,6 +9,7 @@
 #include "dbg.h"
 
 const char host[] PROGMEM = "api.openweathermap.org";
+static bool forecast;
 
 void OpenWeatherMap::on_connect(WiFiClient &client, const __FlashStringHelper *path) {
 	client.print(F("/data/2.5/"));
@@ -22,6 +23,11 @@ void OpenWeatherMap::on_connect(WiFiClient &client, const __FlashStringHelper *p
 	} else {
 		client.print(F("?q="));
 		client.print(cfg.station);
+	}
+
+	// FIXME
+	if (forecast) {
+		client.print(F("&cnt=16"));
 	}
 
 	client.print(F("&appid="));
@@ -97,34 +103,34 @@ static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
 	int cnt = root[F("cnt")];
 	JsonArray &list = root[F("list")];
 
-	root.printTo(Serial);
-	for (int i = 0; i < n && i < cnt; i++) {
-	Serial.println(i);
-		JsonObject &day = list[i];
-		if (!day.success())
-			break;
+	for (int i = 0, j = 0; i < n && j < cnt; i++, j += 2) {
 		struct Forecast &f = fs[i];
-		f.epoch = day[F("dt")];
-		f.ave_humidity = day[F("humidity")];
-		f.wind_degrees = day[F("deg")];
-		f.ave_wind = ceil(float(day[F("speed")]) * 3.6);
 
-		JsonObject &weather = day[F("weather")];
-		strlcpy(f.conditions, weather[F("main")], sizeof(f.conditions));
+		JsonObject &fc = list[j];
+		f.epoch = fc[F("dt")];
+
+		JsonObject &main = fc[F("main")];
+		f.temp_high = main[F("temp_max")];
+		f.temp_low = main[F("temp_min")];
+		f.humidity = main[F("humidity")];
+
+		JsonObject &weather = fc[F("weather")][0];
+		strlcpy(f.conditions, weather[F("description")], sizeof(f.conditions));
 		strlcpy(f.icon, weather[F("icon")], sizeof(f.icon));
 
-		JsonObject &temp = day[F("temp")];
-		f.temp_high = temp[F("max")];
-		f.temp_low = temp[F("min")];
+		JsonObject &wind = fc[F("wind")];
+		f.wind_degrees = wind[F("deg")];
+		f.ave_wind = ceil(float(wind[F("speed")]) * 3.6);
 	}
 }
 
-const unsigned fbytes = 7*JSON_ARRAY_SIZE(1) + JSON_ARRAY_SIZE(7) + JSON_OBJECT_SIZE(2) + 7*JSON_OBJECT_SIZE(4) + 2*JSON_OBJECT_SIZE(5) + 7*JSON_OBJECT_SIZE(6) + 2*JSON_OBJECT_SIZE(8) + 3*JSON_OBJECT_SIZE(9) + 2*JSON_OBJECT_SIZE(10) + 4349;
+const unsigned fbytes = 16*JSON_ARRAY_SIZE(1) + JSON_ARRAY_SIZE(16) + 2*JSON_OBJECT_SIZE(0) + 46*JSON_OBJECT_SIZE(1) + 17*JSON_OBJECT_SIZE(2) + 17*JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + 32*JSON_OBJECT_SIZE(8) + 12603;
 
 bool OpenWeatherMap::fetch_forecasts(struct Forecast forecasts[], int days) {
 	WiFiClient client;
 	bool ret = false;
 
+	forecast = true;
 	if (connect_and_get(client, host, F("forecast"))) {
 		DynamicJsonBuffer buffer(fbytes);
 		JsonObject &root = buffer.parseObject(client);
@@ -137,6 +143,7 @@ bool OpenWeatherMap::fetch_forecasts(struct Forecast forecasts[], int days) {
 			stats.parse_failures++;
 		}
 	}
+	forecast = false;
 	client.stop();
 	return ret;
 }
