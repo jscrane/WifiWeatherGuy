@@ -38,7 +38,6 @@ static bool update_conditions(JsonObject &root, struct Conditions &c) {
 	}
 	c.humidity = atoi(current_observation[F("relative_humidity")] | "0");
 	c.pressure_trend = atoi(current_observation[F("pressure_trend")] | "0");
-	strlcpy(c.wind_dir, current_observation[F("wind_dir")] | "", sizeof(c.wind_dir));
 	c.wind_degrees = current_observation[F("wind_degrees")];
 	strlcpy(c.city, current_observation[F("observation_location")][F("city")] | "", sizeof(c.city));
 
@@ -88,7 +87,6 @@ static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
 			}
 			f.ave_humidity = day[F("avehumidity")];
 			f.wind_degrees = day[F("avewind")][F("degrees")];
-			strlcpy(f.wind_dir, day[F("avewind")][F("dir")] | "", sizeof(f.wind_dir));
 			strlcpy(f.conditions, day[F("conditions")] | "", sizeof(f.conditions));
 			strlcpy(f.icon, day[F("icon")] | "", sizeof(f.icon));
 		}
