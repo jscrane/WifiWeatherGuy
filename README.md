@@ -34,6 +34,11 @@ terms of service means it is no longer supported. (Wunderground
 client code remains for reference.)
 
 The current supported provider is [OpenWeatherMap](https://openweathermap.org).
+Limitations of this API are:
+- astronomy: moon age, phase
+- forecasts: forecasts in the free API are every 3 hours and you get 40 of
+them, which is too big to parse on an ESP8266. (Currently we hack this by
+getting 16 of them and skipping every other one.)
 
 ## Credits
 - Javascript [transparency](https://github.com/leonidas/transparency)
