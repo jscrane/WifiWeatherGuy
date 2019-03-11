@@ -244,8 +244,8 @@ void display_weather(struct Conditions &c) {
 	display_humidity(c.humidity);
 
 	tft.setTextSize(2);
-	tft.setCursor(right(val_len(c.atmos_pressure), tft.width(), 2)-12, 1);
-	tft.print(c.atmos_pressure);
+	tft.setCursor(right(val_len(c.pressure), tft.width(), 2)-12, 1);
+	tft.print(c.pressure);
 	tft.setTextSize(1);
 	tft.print(cfg.metric? F("mb"): F("in"));
 	if (c.pressure_trend == 1) {

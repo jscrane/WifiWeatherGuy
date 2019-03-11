@@ -47,11 +47,11 @@ static bool update_conditions(JsonObject &root, struct Conditions &c) {
 	JsonObject &main = root[F("main")];
 	c.temp = main[F("temp")];
 	c.feelslike = main[F("temp_min")];	// hmmm
-	c.atmos_pressure = main[F("pressure")];
+	c.pressure = main[F("pressure")];
 	c.humidity = main[F("humidity")];
 
 	JsonObject &wind = root[F("wind")];
-	c.wind = int(float(wind[F("speed")]) * 3.6);
+	c.wind = ceil(float(wind[F("speed")]) * 3.6);
 	c.wind_degrees = wind[F("deg")];
 
 	JsonObject &sys = root["sys"];
@@ -107,7 +107,7 @@ static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
 		f.epoch = day[F("dt")];
 		f.ave_humidity = day[F("humidity")];
 		f.wind_degrees = day[F("deg")];
-		f.ave_wind = int(float(day[F("speed")]) * 3.6);
+		f.ave_wind = ceil(float(day[F("speed")]) * 3.6);
 
 		JsonObject &weather = day[F("weather")];
 		strlcpy(f.conditions, weather[F("main")], sizeof(f.conditions));

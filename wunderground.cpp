@@ -29,12 +29,12 @@ static bool update_conditions(JsonObject &root, struct Conditions &c) {
 		c.temp = current_observation[F("temp_c")];
 		c.feelslike = atoi(current_observation[F("feelslike_c")] | "0");
 		c.wind = current_observation[F("wind_kph")];
-		c.atmos_pressure = atoi(current_observation[F("pressure_mb")] | "0");
+		c.pressure = atoi(current_observation[F("pressure_mb")] | "0");
 	} else {
 		c.temp = current_observation[F("temp_f")];
 		c.feelslike = atoi(current_observation[F("feelslike_f")] | "0");
 		c.wind = current_observation[F("wind_mph")];
-		c.atmos_pressure = atoi(current_observation[F("pressure_in")] | "0");
+		c.pressure = atoi(current_observation[F("pressure_in")] | "0");
 	}
 	c.humidity = atoi(current_observation[F("relative_humidity")] | "0");
 	c.pressure_trend = atoi(current_observation[F("pressure_trend")] | "0");

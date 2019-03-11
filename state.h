@@ -9,7 +9,7 @@ struct Conditions {
 	int temp, feelslike;
 	int humidity;
 	int wind, wind_degrees;
-	int atmos_pressure;
+	int pressure;
 	int pressure_trend;
 	char wind_dir[10];
 	int sunrise_hour, sunrise_minute;
@@ -29,7 +29,7 @@ struct Forecast {
 	int temp_low;
 	int max_wind;
 	int ave_wind;
-	char wind_dir[8];
+	char wind_dir[10];
 	int wind_degrees;
 	int ave_humidity;
 	char conditions[32];
