@@ -33,12 +33,20 @@ Original support was only for Wunderground. However changes to its
 terms of service means it is no longer supported. (Wunderground
 client code remains for reference.)
 
+### Open Weather Map
 The current supported provider is [OpenWeatherMap](https://openweathermap.org).
 Limitations of this API are:
 - astronomy: moon age, phase
 - forecasts: forecasts in the free API are every 3 hours and you get 40 of
 them, which is too big to parse on an ESP8266. (Currently we hack this by
 getting 16 of them and skipping every other one.)
+
+### Dark Sky
+Limitations of the [Dark Sky API](https://darksky.net/dev/docs) are:
+- no icons (but can use other iconsets)
+- lat/lon only (no "by city")
+- moon phase only (no moonrise/set)
+- aka forecast.io
 
 ## Credits
 - Javascript [transparency](https://github.com/leonidas/transparency)
