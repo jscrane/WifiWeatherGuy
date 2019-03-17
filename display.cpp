@@ -6,6 +6,7 @@
 #include "Configuration.h"
 #include "display.h"
 #include "dbg.h"
+#include "state.h"
 
 #define ICON_W		50
 #define ICON_H		ICON_W
@@ -203,14 +204,34 @@ static void display_wind(int wind_degrees, int wind_speed) {
 	tft.drawLine(ex, ey, ex+wind_speed*(cx-ex)/ICON_W, ey+wind_speed*(cy-ey)/ICON_H, TFT_BLACK);
 }
 
-static void display_wind_speed(int wind_speed, const char *wind_dir, bool metric) {
+static const __FlashStringHelper *wind_dir(int d) {
+	if (d < 12) return F("N");
+	if (d < 34) return F("NNE");
+	if (d < 57) return F("NE");
+	if (d < 79) return F("ENE");
+	if (d < 102) return F("E");
+	if (d < 124) return F("ESE");
+	if (d < 147) return F("SE");
+	if (d < 169) return F("SSE");
+	if (d < 192) return F("S");
+	if (d < 214) return F("SSW");
+	if (d < 237) return F("SW");
+	if (d < 259) return F("WSW");
+	if (d < 282) return F("W");
+	if (d < 304) return F("WNW");
+	if (d < 327) return F("NW");
+	if (d < 349) return F("NNW");
+	return F("N");
+}
+
+static void display_wind_speed(int speed, int deg, bool metric) {
 	tft.setTextSize(2);
 	tft.setCursor(1, 1);
-	tft.print(wind_speed);
+	tft.print(speed);
 	tft.setTextSize(1);
 	tft.print(metric? F("kph"): F("mph"));
 	tft.setCursor(1, 17);
-	tft.print(wind_dir);
+	tft.print(wind_dir(deg));
 }
 
 static void display_temperature(int temp, int temp_min, bool metric) {
@@ -238,13 +259,13 @@ void display_weather(struct Conditions &c) {
 	tft.fillScreen(TFT_WHITE);
 	tft.setTextColor(TFT_BLACK);
 
-	display_wind_speed(c.wind, c.wind_dir, cfg.metric? F("kph"): F("mph"));
+	display_wind_speed(c.wind, c.wind_degrees, cfg.metric? F("kph"): F("mph"));
 	display_temperature(c.temp, c.feelslike, cfg.metric);
 	display_humidity(c.humidity);
 
 	tft.setTextSize(2);
-	tft.setCursor(right(val_len(c.atmos_pressure), tft.width(), 2)-12, 1);
-	tft.print(c.atmos_pressure);
+	tft.setCursor(right(val_len(c.pressure), tft.width(), 2)-12, 1);
+	tft.print(c.pressure);
 	tft.setTextSize(1);
 	tft.print(cfg.metric? F("mb"): F("in"));
 	if (c.pressure_trend == 1) {
@@ -263,7 +284,7 @@ void display_weather(struct Conditions &c) {
 	display_bmp(c.icon, (tft.width() - ICON_W)/2, by);
 
 	display_time(c.epoch, cfg.metric);
-	if (c.wind > 0 && strcmp_P(c.wind_dir, PSTR("Variable")))
+	if (c.wind > 0)
 		display_wind(c.wind_degrees, c.wind);
 }
 
@@ -280,10 +301,12 @@ void display_astronomy(struct Conditions &c) {
 	tft.setCursor(c.sunrise_hour < 10? 7: 1, 17);
 	tft.print(c.sunrise_hour);
 	tft.print(':');
+	if (c.sunrise_minute < 10) tft.print('0');
 	tft.print(c.sunrise_minute);
 	tft.setCursor(1, 25);
 	tft.print(c.sunset_hour);
 	tft.print(':');
+	if (c.sunset_minute < 10) tft.print('0');
 	tft.print(c.sunset_minute);
 
 	const char *rise = "rise";
@@ -318,9 +341,9 @@ void display_forecast(struct Forecast &f) {
 	tft.fillScreen(TFT_WHITE);
 	tft.setTextColor(TFT_BLACK);
 
-	display_wind_speed(f.ave_wind, f.wind_dir, cfg.metric);
+	display_wind_speed(f.ave_wind, f.wind_degrees, cfg.metric);
 	display_temperature(f.temp_high, f.temp_low, cfg.metric);
-	display_humidity(f.ave_humidity);
+	display_humidity(f.humidity);
 
 	tft.setTextSize(2);
 	tft.setCursor(right(3, tft.width(), 2), 1);

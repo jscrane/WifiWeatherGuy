@@ -1,6 +1,6 @@
 BOARD := d1_mini
 UPLOAD_SPEED := 921600
-TERM_SPEED := 115200
+TERMINAL_SPEED := 115200
 CPPFLAGS = -DVERSION=\"${shell date +%F}\" \
 	-DUSER_SETUP_LOADED -DILI9163_DRIVER -DTFT_WIDTH=128 -DTFT_HEIGHT=128 \
 	-DTFT_CS=PIN_D6 -DTFT_DC=PIN_D8 \
@@ -8,5 +8,11 @@ CPPFLAGS = -DVERSION=\"${shell date +%F}\" \
 
 FLASH_SIZE := 4M1M
 BUILD_FCPU := 80000000L
+
+wunderground: CPPFLAGS += -DPROVIDER=Wunderground
+owm: CPPFLAGS += -DPROVIDER=OpenWeatherMap
+owm wunderground: all
+
+.PHONY: wunderground owm
 
 include arduino-esp8266.mk
