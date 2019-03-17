@@ -48,7 +48,11 @@ static bool update_conditions(JsonObject &root, struct Conditions &c) {
 	c.epoch = epoch;
 
 	JsonObject &w = root[F("weather")][0];
-	strlcpy(c.weather, w[F("description")] | "", sizeof(c.weather));
+	const char *desc = w[F("description")] | "";
+	int l = strlen(desc);
+	if (l >= sizeof(c.weather) || l == 0)
+		desc = w[F("main")] | "";
+	strlcpy(c.weather, desc, sizeof(c.weather));
 	strlcpy(c.icon, w[F("icon")] | "", sizeof(c.icon));
 
 	JsonObject &main = root[F("main")];
