@@ -11,9 +11,12 @@
 const char host[] PROGMEM = "api.openweathermap.org";
 static bool forecast;
 
-void OpenWeatherMap::on_connect(WiFiClient &client, const __FlashStringHelper *path) {
+void OpenWeatherMap::on_connect(WiFiClient &client, bool conds) {
 	client.print(F("/data/2.5/"));
-	client.print(path);
+	if (conds)
+		client.print(F("weather"));
+	else
+		client.print(F("forecast"));
 
 	if (cfg.nearest) {
 		client.print(F("?lat="));
@@ -25,10 +28,8 @@ void OpenWeatherMap::on_connect(WiFiClient &client, const __FlashStringHelper *p
 		client.print(cfg.station);
 	}
 
-	// FIXME
-	if (forecast) {
+	if (!conds)
 		client.print(F("&cnt=16"));
-	}
 
 	client.print(F("&appid="));
 	client.print(cfg.key);
@@ -83,7 +84,7 @@ bool OpenWeatherMap::fetch_conditions(struct Conditions &conditions) {
 	WiFiClient client;
 	bool ret = false;
 
-	if (connect_and_get(client, host, F("weather"))) {
+	if (connect_and_get(client, host, true)) {
 		DynamicJsonBuffer buffer(cbytes);
 		JsonObject &root = buffer.parseObject(client);
 		if (ret = root.success()) {
@@ -131,7 +132,7 @@ bool OpenWeatherMap::fetch_forecasts(struct Forecast forecasts[], int days) {
 	bool ret = false;
 
 	forecast = true;
-	if (connect_and_get(client, host, F("forecast"))) {
+	if (connect_and_get(client, host, false)) {
 		DynamicJsonBuffer buffer(fbytes);
 		JsonObject &root = buffer.parseObject(client);
 		if (ret = root.success()) {

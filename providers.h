@@ -7,8 +7,8 @@ public:
 	virtual bool fetch_forecasts(struct Forecast f[], int days) = 0;
 
 protected:
-	bool connect_and_get(WiFiClient &c, const char *host, const __FlashStringHelper *path);
-	virtual void on_connect(WiFiClient &c, const __FlashStringHelper *path) = 0;
+	bool connect_and_get(WiFiClient &c, const char *host, bool conds);
+	virtual void on_connect(WiFiClient &c, bool conds) = 0;
 };
 
 class Wunderground: public Provider {
@@ -17,7 +17,7 @@ public:
 	bool fetch_forecasts(struct Forecast f[], int days);
 
 protected:
-	void on_connect(WiFiClient &c, const __FlashStringHelper *path);
+	void on_connect(WiFiClient &c, bool conds);
 };
 
 class OpenWeatherMap: public Provider {
@@ -26,7 +26,7 @@ public:
 	bool fetch_forecasts(struct Forecast f[], int days);
 
 protected:
-	void on_connect(WiFiClient &c, const __FlashStringHelper *path);
+	void on_connect(WiFiClient &c, bool conds);
 };
 
 #endif

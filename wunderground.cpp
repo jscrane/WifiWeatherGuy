@@ -92,7 +92,7 @@ static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
 		}
 }
 
-void Wunderground::on_connect(WiFiClient &client, const __FlashStringHelper *path) {
+void Wunderground::on_connect(WiFiClient &client, bool conds) {
 	char loc[sizeof(cfg.station)];
 
 	client.print(F("/api/"));
@@ -106,7 +106,7 @@ void Wunderground::on_connect(WiFiClient &client, const __FlashStringHelper *pat
 		strncpy(loc, cfg.station, sizeof(loc));
 	DBG(println(loc));
 
-	client.print(path);
+	client.print(conds? F("astronomy/conditions"): F("forecast"));
 	client.print(F("/q/"));
 	client.print(loc);
 	client.print(F(".json"));
@@ -135,7 +135,7 @@ bool Wunderground::fetch_conditions(struct Conditions &conditions) {
 
 	bool ret = false;
 	WiFiClient client;
-	if (connect_and_get(client, host, F("astronomy/conditions"))) {
+	if (connect_and_get(client, host, true)) {
 		DynamicJsonBuffer buffer(cbytes);
 		JsonObject &root = buffer.parseObject(client);
 		if (ret = root.success()) {
@@ -158,7 +158,7 @@ bool Wunderground::fetch_forecasts(struct Forecast forecasts[], int days) {
 
 	bool ret = false;
 	WiFiClient client;
-	if (connect_and_get(client, host, F("forecast"))) {
+	if (connect_and_get(client, host, false)) {
 		DynamicJsonBuffer buffer(fbytes);
 		JsonObject &root = buffer.parseObject(client);
 		if (ret = root.success()) {

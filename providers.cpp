@@ -5,11 +5,11 @@
 #include "state.h"
 #include "dbg.h"
 
-bool Provider::connect_and_get(WiFiClient &client, const char *host,  const __FlashStringHelper *path) {
+bool Provider::connect_and_get(WiFiClient &client, const char *host, bool conds) {
 	if (client.connect(host, 80)) {
 		client.print(F("GET "));
 
-		on_connect(client, path);
+		on_connect(client, conds);
 
 		client.print(F(" HTTP/1.1\r\nHost: "));
 		client.print(host);
