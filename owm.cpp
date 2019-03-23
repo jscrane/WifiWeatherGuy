@@ -42,9 +42,12 @@ void OpenWeatherMap::on_connect(WiFiClient &client, bool conds) {
 
 static bool update_conditions(JsonObject &root, struct Conditions &c) {
 	time_t epoch = (time_t)root[F("dt")];
-	if (c.epoch == epoch)
+	if (epoch <= c.epoch)
 		return false;
 
+	stats.num_updates++;
+	if (c.epoch)
+		stats.update(epoch - c.epoch);
 	c.epoch = epoch;
 
 	JsonObject &w = root[F("weather")][0];
