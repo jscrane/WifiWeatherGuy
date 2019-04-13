@@ -50,7 +50,7 @@ bool OpenWeatherMap::update_conditions(JsonObject &root, struct Conditions &c) {
 		stats.update(epoch - c.epoch);
 	c.epoch = epoch;
 	c.age_of_moon = moon_age(epoch);
-	strlcpy(c.moon_phase, moon_phase(c.age_of_moon), sizeof(c.moon_phase));
+	strncpy_P(c.moon_phase, moon_phase(c.age_of_moon), sizeof(c.moon_phase));
 
 	JsonObject &w = root[F("weather")][0];
 	const char *desc = w[F("description")] | "";

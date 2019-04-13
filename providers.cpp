@@ -39,20 +39,20 @@ int Provider::moon_age(time_t &epoch) {
 
 const char *Provider::moon_phase(int age) {
 	if (age == 0)
-		return "New Moon";
+		return PSTR("New Moon");
 	if (age < 7)
-		return "Waxing Crescent";
+		return PSTR("Waxing Crescent");
 	if (age == 7)
-		return "First Quarter";
+		return PSTR("First Quarter");
 	if (age < 14)
-		return "Waxing Gibbous";
+		return PSTR("Waxing Gibbous");
 	if (age == 14)
-		return "Full Moon";
+		return PSTR("Full Moon");
 	if (age < 21)
-		return "Waning Gibbous";
+		return PSTR("Waning Gibbous");
 	if (age == 21)
-		return "Last Quarter";
+		return PSTR("Last Quarter");
 	if (age < 28)
-		return "Waning Crescent";
-	return "New Moon";
+		return PSTR("Waning Crescent");
+	return PSTR("New Moon");
 }
