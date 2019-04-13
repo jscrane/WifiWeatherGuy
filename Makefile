@@ -10,7 +10,9 @@ FLASH_SIZE := 4M1M
 BUILD_FCPU := 80000000L
 
 wunderground: CPPFLAGS += -DPROVIDER=Wunderground
+wunderground: SPIFFS_DIR := data/wunderground
 owm: CPPFLAGS += -DPROVIDER=OpenWeatherMap
+owm: SPIFFS_DIR := data/owm
 owm wunderground: all
 
 .PHONY: wunderground owm

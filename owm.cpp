@@ -40,12 +40,17 @@ void OpenWeatherMap::on_connect(WiFiClient &client, bool conds) {
 		client.print(F("imperial"));
 }
 
-static bool update_conditions(JsonObject &root, struct Conditions &c) {
+bool OpenWeatherMap::update_conditions(JsonObject &root, struct Conditions &c) {
 	time_t epoch = (time_t)root[F("dt")];
-	if (c.epoch == epoch)
+	if (epoch <= c.epoch)
 		return false;
 
+	stats.num_updates++;
+	if (c.epoch)
+		stats.update(epoch - c.epoch);
 	c.epoch = epoch;
+	c.age_of_moon = moon_age(epoch);
+	strncpy_P(c.moon_phase, moon_phase(c.age_of_moon), sizeof(c.moon_phase));
 
 	JsonObject &w = root[F("weather")][0];
 	const char *desc = w[F("description")] | "";

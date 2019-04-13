@@ -6,6 +6,8 @@ public:
 	virtual bool fetch_conditions(struct Conditions &c) = 0;
 	virtual bool fetch_forecasts(struct Forecast f[], int days) = 0;
 
+	int moon_age(time_t &epoch);
+	const char *moon_phase(int age);
 protected:
 	bool connect_and_get(WiFiClient &c, const char *host, bool conds);
 	virtual void on_connect(WiFiClient &c, bool conds) = 0;
@@ -27,6 +29,9 @@ public:
 
 protected:
 	void on_connect(WiFiClient &c, bool conds);
+
+private:
+	bool update_conditions(class JsonObject &root, struct Conditions &c);
 };
 
 #endif

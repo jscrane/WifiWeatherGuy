@@ -316,18 +316,20 @@ void display_astronomy(struct Conditions &c) {
 	tft.setCursor(centre_text(set, tft.width()/2, 1), 25);
 	tft.print(set);
 
-	tft.setCursor(right(3 + strlen(c.moonrise_hour), tft.width(), 1), 17);
-	tft.print(c.moonrise_hour);
-	tft.print(':');
-	tft.print(c.moonrise_minute);
-	tft.setCursor(right(3 + strlen(c.moonset_hour), tft.width(), 1), 25);
-	tft.print(c.moonset_hour);
-	tft.print(':');
-	tft.print(c.moonset_minute);
+	int rl = strlen(c.moonrise_hour);
+	if (rl > 0) {
+		tft.setCursor(right(3 + rl, tft.width(), 1), 17);
+		tft.print(c.moonrise_hour);
+		tft.print(':');
+		tft.print(c.moonrise_minute);
+		tft.setCursor(right(3 + strlen(c.moonset_hour), tft.width(), 1), 25);
+		tft.print(c.moonset_hour);
+		tft.print(':');
+		tft.print(c.moonset_minute);
+	}
 
 	char buf[32];
-	strcpy(buf, "moon");
-	strcat(buf, c.age_of_moon);
+	snprintf(buf, sizeof(buf), "moon%d", c.age_of_moon);
 	unsigned by = (tft.height() - ICON_H)/2, ay = by + ICON_H;
 	display_bmp(buf, (tft.width() - ICON_W)/2, by);
 
