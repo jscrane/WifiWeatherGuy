@@ -18,7 +18,7 @@ struct Conditions {
 	char moonset_hour[3];
 	char moonset_minute[3];
 	char moon_phase[16];
-	char age_of_moon[3];
+	int age_of_moon;
 };
 
 struct Forecast {

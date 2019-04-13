@@ -326,8 +326,7 @@ void display_astronomy(struct Conditions &c) {
 	tft.print(c.moonset_minute);
 
 	char buf[32];
-	strcpy(buf, "moon");
-	strcat(buf, c.age_of_moon);
+	snprintf(buf, sizeof(buf), "moon%d", c.age_of_moon);
 	unsigned by = (tft.height() - ICON_H)/2, ay = by + ICON_H;
 	display_bmp(buf, (tft.width() - ICON_W)/2, by);
 

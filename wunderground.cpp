@@ -48,7 +48,7 @@ static bool update_conditions(JsonObject &root, struct Conditions &c) {
 	c.sunset_minute = atoi(sun[F("sunset")][F("minute")] | "0");
 
 	JsonObject &moon = root[F("moon_phase")];
-	strlcpy(c.age_of_moon, moon[F("ageOfMoon")] | "", sizeof(c.age_of_moon));
+	c.age_of_moon = atoi(moon[F("ageOfMoon")] | "0");
 	strlcpy(c.moon_phase, moon[F("phaseofMoon")] | "", sizeof(c.moon_phase));
 	strlcpy(c.moonrise_hour, moon[F("moonrise")][F("hour")] | "", sizeof(c.moonrise_hour));
 	strlcpy(c.moonrise_minute, moon[F("moonrise")][F("minute")] | "", sizeof(c.moonrise_minute));

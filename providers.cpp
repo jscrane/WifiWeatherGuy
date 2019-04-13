@@ -27,3 +27,32 @@ bool Provider::connect_and_get(WiFiClient &client, const char *host, bool conds)
 	stats.connect_failures++;
 	return false;
 }
+
+// https://en.wikipedia.org/wiki/Lunar_phase#Calculating_phase
+int Provider::moon_age(time_t &epoch) {
+	const long last_full = 937008000;	// Aug 11, 1999
+	const double secs_per_day = 86400;
+	const double lunation_period = 29.530588853;
+
+	return round(fmod(((long)epoch - last_full) / secs_per_day, lunation_period));
+}
+
+const char *Provider::moon_phase(int age) {
+	if (age == 0)
+		return "New Moon";
+	if (age < 7)
+		return "Waxing Crescent";
+	if (age == 7)
+		return "First Quarter";
+	if (age < 14)
+		return "Waxing Gibbous";
+	if (age == 14)
+		return "Full Moon";
+	if (age < 21)
+		return "Waning Gibbous";
+	if (age == 21)
+		return "Last Quarter";
+	if (age < 28)
+		return "Waning Crescent";
+	return "New Moon";
+}
