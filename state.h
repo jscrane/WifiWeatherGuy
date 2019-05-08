@@ -23,7 +23,6 @@ struct Conditions {
 
 struct Forecast {
 	time_t epoch;
-	char day[4];
 	int temp_high;
 	int temp_low;
 	int max_wind;

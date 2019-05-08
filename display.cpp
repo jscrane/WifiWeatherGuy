@@ -349,7 +349,9 @@ void display_forecast(struct Forecast &f) {
 
 	tft.setTextSize(2);
 	tft.setCursor(right(3, tft.width(), 2), 1);
-	tft.print(f.day);
+	char day[4];
+	strftime(day, sizeof(day), "%a", localtime(&f.epoch));
+	tft.print(day);
 
 	tft.setTextSize(1);
 	unsigned by = (tft.height() - ICON_H)/2, wy = by + ICON_H;

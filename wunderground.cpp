@@ -73,7 +73,6 @@ static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
 			JsonObject &day = days[i];
 			struct Forecast &f = fs[i];
 			f.epoch = (time_t)atoi(day[F("date")][F("epoch")] | "0");
-			strlcpy(f.day, day[F("date")][F("weekday_short")] | "", sizeof(f.day));
 			if (cfg.metric) {
 				f.temp_high = atoi(day[F("high")][F("celsius")] | "0");
 				f.temp_low = atoi(day[F("low")][F("celsius")] | "0");

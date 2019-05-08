@@ -44,15 +44,15 @@ const char *Provider::moon_phase(int age) {
 		return PSTR("Waxing Crescent");
 	if (age == 7)
 		return PSTR("First Quarter");
-	if (age < 14)
+	if (age < 15)
 		return PSTR("Waxing Gibbous");
-	if (age == 14)
+	if (age == 15)
 		return PSTR("Full Moon");
-	if (age < 21)
+	if (age < 22)
 		return PSTR("Waning Gibbous");
-	if (age == 21)
+	if (age == 22)
 		return PSTR("Last Quarter");
-	if (age < 28)
+	if (age < 29)
 		return PSTR("Waning Crescent");
 	return PSTR("New Moon");
 }
