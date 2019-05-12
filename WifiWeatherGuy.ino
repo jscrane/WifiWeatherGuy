@@ -263,7 +263,6 @@ void loop() {
 		else
 			screen++;
 		update_display(screen);
-		last_switch = now;
 	}
 	swtch = false;
 
