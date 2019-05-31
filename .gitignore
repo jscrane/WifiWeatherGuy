@@ -1,8 +1,9 @@
-.lib
+.build
 *.cpp.d
 *.cpp.o
 *.ino.bin
 *.ino.elf
 spiffs.img
+platform.mk
 *.swp
 eagle/WifiWeatherGuy.pro

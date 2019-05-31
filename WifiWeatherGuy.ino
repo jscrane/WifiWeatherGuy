@@ -32,6 +32,7 @@ config cfg;
 struct Conditions conditions;
 struct Forecast forecasts[4];
 struct Statistics stats;
+
 PROVIDER provider;
 
 void config::configure(JsonObject &o) {
@@ -54,6 +55,8 @@ void config::configure(JsonObject &o) {
 
 static volatile bool swtch;
 
+void ICACHE_RAM_ATTR swtch_handler() { swtch = true; }
+
 const char *config_file = "/config.json";
 
 void setup() {
@@ -64,6 +67,7 @@ void setup() {
 
 	pinMode(SWITCH, INPUT_PULLUP);
 	debug = digitalRead(SWITCH) == LOW;
+	debug = true;
 
 	bool result = SPIFFS.begin();
 	if (!result) {
@@ -200,7 +204,7 @@ cont:
 		stats.last_fetch_conditions = -cfg.conditions_interval;
 		stats.last_fetch_forecasts = -cfg.forecasts_interval;
 	}
-	attachInterrupt(SWITCH, []() { swtch=true; }, FALLING);
+	attachInterrupt(SWITCH, swtch_handler, FALLING);
 }
 
 void update_display(int screen) {

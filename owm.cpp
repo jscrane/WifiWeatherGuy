@@ -8,7 +8,7 @@
 #include "providers.h"
 #include "dbg.h"
 
-const char host[] PROGMEM = "api.openweathermap.org";
+const char host[] = "api.openweathermap.org";
 static bool forecast;
 
 void OpenWeatherMap::on_connect(WiFiClient &client, bool conds) {
