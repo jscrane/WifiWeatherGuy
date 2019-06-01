@@ -27,19 +27,10 @@ static uint32_t read32(File &f) {
 }
 
 // from Adafruit's spitftbitmap ST7735 example
-static int display_bmp(const char *filename, uint8_t x, uint8_t y) {
-	int bmpWidth, bmpHeight;	// W+H in pixels
-	uint8_t	bmpDepth;		// Bit depth (currently must be 24)
-	uint32_t bmpImageoffset;	// Start of image data in file
-	uint32_t rowSize;	// Not always = bmpWidth; may have padding
-	uint8_t buf[60];
-	uint8_t	buffidx = sizeof(buf);	// Current position in buffer
-	boolean	flip = true;		// BMP is stored bottom-to-top
-	int w, h, row, col;
-	uint8_t	r, g, b;
-	uint32_t pos = 0;
+// updated with Bodmer's example in BMP_functions.cpp
+static int display_bmp(const char *filename, uint16_t x, uint16_t y) {
 
-	if((x >= tft.width()) || (y >= tft.height())) return -1;
+	if ((x >= tft.width()) || (y >= tft.height())) return -1;
 
 	uint32_t startTime = millis();
 
@@ -67,7 +58,7 @@ static int display_bmp(const char *filename, uint8_t x, uint8_t y) {
 	DBG(println(size));
 
 	(void)read32(f); // Read & ignore creator bytes
-	bmpImageoffset = read32(f); // Start of image data
+	uint32_t bmpImageoffset = read32(f); // Start of image data
 
 	DBG(print(F("Image Offset: ")));
 	DBG(println(bmpImageoffset, DEC));
@@ -76,14 +67,14 @@ static int display_bmp(const char *filename, uint8_t x, uint8_t y) {
 	size = read32(f);
 	DBG(print(F("Header size: ")));
 	DBG(println(size));
-	bmpWidth	= read32(f);
-	bmpHeight = read32(f);
+	uint16_t w = read32(f);
+	uint16_t h = read32(f);
 	if (read16(f) != 1) {
 		ERR(println(F("# planes -- must be '1'")));
 		f.close();
 		return -1;
 	}
-	bmpDepth = read16(f); // bits per pixel
+	uint16_t bmpDepth = read16(f); // bits per pixel
 	DBG(print(F("Bit Depth: ")));
 	DBG(println(bmpDepth));
 	if ((bmpDepth != 24) || (read32(f) != 0)) {
@@ -94,61 +85,34 @@ static int display_bmp(const char *filename, uint8_t x, uint8_t y) {
 	}
 	
 	DBG(print(F("Image size: ")));
-	DBG(print(bmpWidth));
+	DBG(print(w));
 	DBG(print('x'));
-	DBG(println(bmpHeight));
+	DBG(println(h));
 	
-	// BMP rows are padded (if needed) to 4-byte boundary
-	rowSize = (bmpWidth * 3 + 3) & ~3;
+	uint32_t rowSize = (w * 3 + 3) & ~3;
+	tft.setSwapBytes(true);
+	y += h-1;
 	
-	// If bmpHeight is negative, image is in top-down order.
-	// This is not canon but has been observed in the wild.
-	if (bmpHeight < 0) {
-		bmpHeight = -bmpHeight;
-		flip			= false;
-	}
-	
-	// Crop area to be loaded
-	w = bmpWidth;
-	h = bmpHeight;
-	if ((x+w-1) >= tft.width())	w = tft.width()	- x;
-	if ((y+h-1) >= tft.height()) h = tft.height() - y;
-	
-	// Set TFT address window to clipped image bounds
-	tft.setAddrWindow(x, y, x+w-1, y+h-1);
-	
-	for (row=0; row<h; row++) { // For each scanline...
+	uint16_t padding = (4 - ((w * 3) & 3)) & 3;
+	uint8_t lineBuffer[w * 3 + padding];
+	uint32_t pos = bmpImageoffset;
 
-		// Seek to start of scan line.	It might seem labor-
-		// intensive to be doing this on every line, but this
-		// method covers a lot of gritty details like cropping
-		// and scanline padding.	Also, the seek only takes
-		// place if the file position actually needs to change
-		// (avoids a lot of cluster math in SD library).
-		if (flip) // Bitmap is stored bottom-to-top order (normal BMP)
-			pos = bmpImageoffset + (bmpHeight - 1 - row) * rowSize;
-		else		 // Bitmap is stored top-to-bottom
-			pos = bmpImageoffset + row * rowSize;
-			
-		if (f.position() != pos) { // Need seek?
+	for (uint16_t row = 0; row < h; row++) {
+
+		if (f.position() != pos)
 			f.seek(pos);
-			buffidx = sizeof(buf); // Force buffer reload
-		}
-	
-		for (col=0; col<w; col++) { // For each pixel...
-			// Time to read more pixel data?
-			if (buffidx >= sizeof(buf)) { // Indeed
-				f.read(buf, sizeof(buf));
-				buffidx = 0; // Set index to beginning
-			}
-	
-			// Convert pixel from BMP to TFT format, push to display
-			b = buf[buffidx++];
-			g = buf[buffidx++];
-			r = buf[buffidx++];
 
-			tft.pushColor(tft.color565(r, g, b));
-		} // end pixel
+		f.read(lineBuffer, sizeof(lineBuffer));
+		uint8_t *bptr = lineBuffer;
+		uint16_t *tptr = (uint16_t *)lineBuffer;
+		for (uint16_t col = 0; col < w; col++) {
+			uint8_t b = *bptr++;
+			uint8_t g = *bptr++;
+			uint8_t r = *bptr++;
+			*tptr++ = tft.color565(r, g, b);
+		}
+		tft.pushImage(x, y--, w, 1, (uint16_t*)lineBuffer);
+		pos += rowSize;
 	}
 	f.close();
 	DBG(print(F("Loaded in ")));
