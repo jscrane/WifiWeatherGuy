@@ -67,7 +67,6 @@ void setup() {
 
 	pinMode(SWITCH, INPUT_PULLUP);
 	debug = digitalRead(SWITCH) == LOW;
-	debug = true;
 
 	bool result = SPIFFS.begin();
 	if (!result) {
