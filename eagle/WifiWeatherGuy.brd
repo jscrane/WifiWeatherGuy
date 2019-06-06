@@ -131,6 +131,22 @@
 <text x="20.32" y="58.42" size="1.778" layer="22" rot="MR90" align="center">SSID: WifiWeatherGuy
 Config: http://192.168.4.1
 (c) 2018 Steve</text>
+<text x="43.18" y="36.83" size="1.016" layer="21" rot="R90">RST</text>
+<text x="45.72" y="36.83" size="1.016" layer="21" rot="R90">A0</text>
+<text x="48.26" y="36.83" size="1.016" layer="21" rot="R90">D0</text>
+<text x="50.8" y="36.83" size="1.016" layer="21" rot="R90">D5</text>
+<text x="53.34" y="36.83" size="1.016" layer="21" rot="R90">D6</text>
+<text x="55.88" y="36.83" size="1.016" layer="21" rot="R90">D7</text>
+<text x="58.42" y="36.83" size="1.016" layer="21" rot="R90">D8</text>
+<text x="60.96" y="36.83" size="1.016" layer="21" rot="R90">3v3</text>
+<text x="43.18" y="77.47" size="1.016" layer="21" rot="R90">TX</text>
+<text x="45.72" y="77.47" size="1.016" layer="21" rot="R90">RX</text>
+<text x="48.26" y="77.47" size="1.016" layer="21" rot="R90">D1</text>
+<text x="50.8" y="77.47" size="1.016" layer="21" rot="R90">D2</text>
+<text x="53.34" y="77.47" size="1.016" layer="21" rot="R90">D3</text>
+<text x="55.88" y="77.47" size="1.016" layer="21" rot="R90">D4</text>
+<text x="58.42" y="77.47" size="1.016" layer="21" rot="R90">G</text>
+<text x="60.96" y="77.47" size="1.016" layer="21" rot="R90">5V</text>
 </plain>
 <libraries>
 <library name="switch-omron">
