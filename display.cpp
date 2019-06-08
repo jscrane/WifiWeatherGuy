@@ -3,7 +3,6 @@
 #include <FS.h>
 #include <time.h>
 #include <TFT_eSPI.h>
-#include <ArduinoJson.h>
 #include "Configuration.h"
 #include "display.h"
 #include "dbg.h"

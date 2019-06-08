@@ -40,7 +40,7 @@ void OpenWeatherMap::on_connect(WiFiClient &client, bool conds) {
 		client.print(F("imperial"));
 }
 
-bool OpenWeatherMap::update_conditions(JsonObject &root, struct Conditions &c) {
+bool OpenWeatherMap::update_conditions(JsonDocument &root, struct Conditions &c) {
 	time_t epoch = (time_t)root[F("dt")];
 	if (epoch <= c.epoch)
 		return false;
@@ -100,8 +100,7 @@ bool OpenWeatherMap::fetch_conditions(struct Conditions &conditions) {
 			ERR(println(F("Failed to parse!")));
 			stats.parse_failures++;
 		} else {
-			JsonObject root = doc.as<JsonObject>();
-			update_conditions(root, conditions);
+			update_conditions(doc, conditions);
 			DBG(print(F("Done ")));
 			DBG(println(doc.memoryUsage()));
 			ret = true;
@@ -111,7 +110,7 @@ bool OpenWeatherMap::fetch_conditions(struct Conditions &conditions) {
 	return ret;
 }
 
-static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
+static void update_forecasts(JsonDocument &root, struct Forecast fs[], int n) {
 	int cnt = root[F("cnt")];
 	const JsonArray &list = root[F("list")];
 
@@ -150,8 +149,7 @@ bool OpenWeatherMap::fetch_forecasts(struct Forecast forecasts[], int days) {
 			ERR(println(F("Failed to parse!")));
 			stats.parse_failures++;
 		} else {
-			JsonObject root = doc.as<JsonObject>();
-			update_forecasts(root, forecasts, days);
+			update_forecasts(doc, forecasts, days);
 			DBG(print(F("Done ")));
 			DBG(println(doc.memoryUsage()));
 			ret = true;

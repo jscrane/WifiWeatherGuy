@@ -35,7 +35,7 @@ struct Statistics stats;
 
 PROVIDER provider;
 
-void config::configure(JsonObject &o) {
+void config::configure(JsonDocument &o) {
 	strlcpy(ssid, o[F("ssid")] | "", sizeof(ssid));
 	strlcpy(password, o[F("password")] | "", sizeof(password));
 	strlcpy(key, o[F("key")] | "", sizeof(key));

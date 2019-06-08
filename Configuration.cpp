@@ -22,7 +22,7 @@ bool Configuration::read_file(const char *filename) {
 	DBG(print(F("config size: ")));
 	DBG(println(doc.memoryUsage()));
 	JsonObject root = doc.as<JsonObject>();
-	configure(root);
+	configure(doc);
 	return true;
 }
 

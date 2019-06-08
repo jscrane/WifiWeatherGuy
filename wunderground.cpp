@@ -10,7 +10,7 @@
 
 const char host[] PROGMEM = "api.wunderground.com";
 
-static bool update_conditions(JsonObject &root, struct Conditions &c) {
+static bool update_conditions(JsonDocument &root, struct Conditions &c) {
 	const JsonObject &current_observation = root[F("current_observation")];
 	if (current_observation.isNull())
 		return false;
@@ -66,7 +66,7 @@ static bool update_conditions(JsonObject &root, struct Conditions &c) {
 	return true;
 }
 
-static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
+static void update_forecasts(JsonDocument &root, struct Forecast fs[], int n) {
 	const JsonArray &days = root[F("forecast")][F("simpleforecast")][F("forecastday")];
 	if (!days.isNull())
 		for (int i = 0; i < days.size() && i < n; i++) {
@@ -141,8 +141,7 @@ bool Wunderground::fetch_conditions(struct Conditions &conditions) {
 			ERR(println(F("Failed to parse!")));
 			stats.parse_failures++;
 		} else {
-			JsonObject root = doc.as<JsonObject>();
-			update_conditions(root, conditions);
+			update_conditions(doc, conditions);
 			DBG(print(F("Done ")));
 			DBG(println(doc.size()));
 			ret = true;
@@ -166,8 +165,7 @@ bool Wunderground::fetch_forecasts(struct Forecast forecasts[], int days) {
 			ERR(println(F("Failed to parse!")));
 			stats.parse_failures++;
 		} else {
-			JsonObject root = doc.as<JsonObject>();
-			update_forecasts(root, forecasts, days);
+			update_forecasts(doc, forecasts, days);
 			DBG(print(F("Done ")));
 			DBG(println(doc.size()));
 			ret = true;
