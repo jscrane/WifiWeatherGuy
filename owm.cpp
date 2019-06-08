@@ -52,7 +52,7 @@ bool OpenWeatherMap::update_conditions(JsonObject &root, struct Conditions &c) {
 	c.age_of_moon = moon_age(epoch);
 	strncpy_P(c.moon_phase, moon_phase(c.age_of_moon), sizeof(c.moon_phase));
 
-	JsonObject &w = root[F("weather")][0];
+	const JsonObject &w = root[F("weather")][0];
 	const char *desc = w[F("description")] | "";
 	int l = strlen(desc);
 	if (l >= sizeof(c.weather) || l == 0)
@@ -60,17 +60,17 @@ bool OpenWeatherMap::update_conditions(JsonObject &root, struct Conditions &c) {
 	strlcpy(c.weather, desc, sizeof(c.weather));
 	strlcpy(c.icon, w[F("icon")] | "", sizeof(c.icon));
 
-	JsonObject &main = root[F("main")];
+	const JsonObject &main = root[F("main")];
 	c.temp = main[F("temp")];
 	c.feelslike = main[F("temp_min")];	// hmmm
 	c.pressure = main[F("pressure")];
 	c.humidity = main[F("humidity")];
 
-	JsonObject &wind = root[F("wind")];
+	const JsonObject &wind = root[F("wind")];
 	c.wind = ceil(float(wind[F("speed")]) * 3.6);
 	c.wind_degrees = wind[F("deg")];
 
-	JsonObject &sys = root["sys"];
+	const JsonObject &sys = root["sys"];
 	time_t sunrise = (time_t)sys["sunrise"];
 	struct tm *sr = gmtime(&sunrise);
 	c.sunrise_hour = sr->tm_hour;
@@ -87,22 +87,24 @@ bool OpenWeatherMap::update_conditions(JsonObject &root, struct Conditions &c) {
 	return true;
 }
 
-const unsigned cbytes = JSON_ARRAY_SIZE(1) + JSON_OBJECT_SIZE(1) + 2*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(12) + 956;
+const unsigned cbytes = JSON_ARRAY_SIZE(3) + 2*JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + 3*JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(12) + 976;
 
 bool OpenWeatherMap::fetch_conditions(struct Conditions &conditions) {
 	WiFiClient client;
 	bool ret = false;
 
 	if (connect_and_get(client, host, true)) {
-		DynamicJsonBuffer buffer(cbytes);
-		JsonObject &root = buffer.parseObject(client);
-		if (ret = root.success()) {
-			update_conditions(root, conditions);
-			DBG(print(F("Done ")));
-			DBG(println(buffer.size()));
-		} else {
+		DynamicJsonDocument doc(cbytes);
+		auto error = deserializeJson(doc, client);
+		if (error) {
 			ERR(println(F("Failed to parse!")));
 			stats.parse_failures++;
+		} else {
+			JsonObject root = doc.as<JsonObject>();
+			update_conditions(root, conditions);
+			DBG(print(F("Done ")));
+			DBG(println(doc.memoryUsage()));
+			ret = true;
 		}
 	}
 	client.stop();
@@ -111,24 +113,24 @@ bool OpenWeatherMap::fetch_conditions(struct Conditions &conditions) {
 
 static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
 	int cnt = root[F("cnt")];
-	JsonArray &list = root[F("list")];
+	const JsonArray &list = root[F("list")];
 
 	for (int i = 0, j = 0; i < n && j < cnt; i++, j += 2) {
 		struct Forecast &f = fs[i];
 
-		JsonObject &fc = list[j];
+		const JsonObject &fc = list[j];
 		f.epoch = fc[F("dt")];
 
-		JsonObject &main = fc[F("main")];
+		const JsonObject &main = fc[F("main")];
 		f.temp_high = main[F("temp_max")];
 		f.temp_low = main[F("temp_min")];
 		f.humidity = main[F("humidity")];
 
-		JsonObject &weather = fc[F("weather")][0];
+		const JsonObject &weather = fc[F("weather")][0];
 		strlcpy(f.conditions, weather[F("description")], sizeof(f.conditions));
 		strlcpy(f.icon, weather[F("icon")], sizeof(f.icon));
 
-		JsonObject &wind = fc[F("wind")];
+		const JsonObject &wind = fc[F("wind")];
 		f.wind_degrees = wind[F("deg")];
 		f.ave_wind = ceil(float(wind[F("speed")]) * 3.6);
 	}
@@ -142,15 +144,17 @@ bool OpenWeatherMap::fetch_forecasts(struct Forecast forecasts[], int days) {
 
 	forecast = true;
 	if (connect_and_get(client, host, false)) {
-		DynamicJsonBuffer buffer(fbytes);
-		JsonObject &root = buffer.parseObject(client);
-		if (ret = root.success()) {
-			update_forecasts(root, forecasts, days);
-			DBG(print(F("Done ")));
-			DBG(println(buffer.size()));
-		} else {
+		DynamicJsonDocument doc(fbytes);
+		auto error = deserializeJson(doc, client);
+		if (error) {
 			ERR(println(F("Failed to parse!")));
 			stats.parse_failures++;
+		} else {
+			JsonObject root = doc.as<JsonObject>();
+			update_forecasts(root, forecasts, days);
+			DBG(print(F("Done ")));
+			DBG(println(doc.memoryUsage()));
+			ret = true;
 		}
 	}
 	forecast = false;

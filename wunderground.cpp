@@ -11,8 +11,8 @@
 const char host[] PROGMEM = "api.wunderground.com";
 
 static bool update_conditions(JsonObject &root, struct Conditions &c) {
-	JsonObject &current_observation = root[F("current_observation")];
-	if (!current_observation.success())
+	const JsonObject &current_observation = root[F("current_observation")];
+	if (current_observation.isNull())
 		return false;
 
 	time_t epoch = (time_t)atoi(current_observation[F("observation_epoch")] | "0");
@@ -41,13 +41,13 @@ static bool update_conditions(JsonObject &root, struct Conditions &c) {
 	c.wind_degrees = current_observation[F("wind_degrees")];
 	strlcpy(c.city, current_observation[F("observation_location")][F("city")] | "", sizeof(c.city));
 
-	JsonObject &sun = root[F("sun_phase")];
+	const JsonObject &sun = root[F("sun_phase")];
 	c.sunrise_hour = atoi(sun[F("sunrise")][F("hour")] | "0");
 	c.sunrise_minute = atoi(sun[F("sunrise")][F("minute")] | "0");
 	c.sunset_hour = atoi(sun[F("sunset")][F("hour")] | "0");
 	c.sunset_minute = atoi(sun[F("sunset")][F("minute")] | "0");
 
-	JsonObject &moon = root[F("moon_phase")];
+	const JsonObject &moon = root[F("moon_phase")];
 	c.age_of_moon = atoi(moon[F("ageOfMoon")] | "0");
 	strlcpy(c.moon_phase, moon[F("phaseofMoon")] | "", sizeof(c.moon_phase));
 	strlcpy(c.moonrise_hour, moon[F("moonrise")][F("hour")] | "", sizeof(c.moonrise_hour));
@@ -67,10 +67,10 @@ static bool update_conditions(JsonObject &root, struct Conditions &c) {
 }
 
 static void update_forecasts(JsonObject &root, struct Forecast fs[], int n) {
-	JsonArray &days = root[F("forecast")][F("simpleforecast")][F("forecastday")];
-	if (days.success())
+	const JsonArray &days = root[F("forecast")][F("simpleforecast")][F("forecastday")];
+	if (!days.isNull())
 		for (int i = 0; i < days.size() && i < n; i++) {
-			JsonObject &day = days[i];
+			const JsonObject &day = days[i];
 			struct Forecast &f = fs[i];
 			f.epoch = (time_t)atoi(day[F("date")][F("epoch")] | "0");
 			if (cfg.metric) {
@@ -135,15 +135,17 @@ bool Wunderground::fetch_conditions(struct Conditions &conditions) {
 	bool ret = false;
 	WiFiClient client;
 	if (connect_and_get(client, host, true)) {
-		DynamicJsonBuffer buffer(cbytes);
-		JsonObject &root = buffer.parseObject(client);
-		if (ret = root.success()) {
-			update_conditions(root, conditions);
-			DBG(print(F("Done ")));
-			DBG(println(buffer.size()));
-		} else {
+		DynamicJsonDocument doc(cbytes);
+		auto error = deserializeJson(doc, client);
+		if (error) {
 			ERR(println(F("Failed to parse!")));
 			stats.parse_failures++;
+		} else {
+			JsonObject root = doc.as<JsonObject>();
+			update_conditions(root, conditions);
+			DBG(print(F("Done ")));
+			DBG(println(doc.size()));
+			ret = true;
 		}
 	}
 
@@ -158,15 +160,17 @@ bool Wunderground::fetch_forecasts(struct Forecast forecasts[], int days) {
 	bool ret = false;
 	WiFiClient client;
 	if (connect_and_get(client, host, false)) {
-		DynamicJsonBuffer buffer(fbytes);
-		JsonObject &root = buffer.parseObject(client);
-		if (ret = root.success()) {
-			update_forecasts(root, forecasts, days);
-			DBG(print(F("Done ")));
-			DBG(println(buffer.size()));
-		} else {
+		DynamicJsonDocument doc(fbytes);
+		auto error = deserializeJson(doc, client);
+		if (error) {
 			ERR(println(F("Failed to parse!")));
 			stats.parse_failures++;
+		} else {
+			JsonObject root = doc.as<JsonObject>();
+			update_forecasts(root, forecasts, days);
+			DBG(print(F("Done ")));
+			DBG(println(doc.size()));
+			ret = true;
 		}
 	}
 

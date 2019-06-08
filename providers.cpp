@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
+#include <ArduinoJson.h>
 
 #include "providers.h"
 #include "state.h"

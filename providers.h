@@ -31,7 +31,7 @@ protected:
 	void on_connect(WiFiClient &c, bool conds);
 
 private:
-	bool update_conditions(class JsonObject &root, struct Conditions &c);
+	bool update_conditions(JsonObject &root, struct Conditions &c);
 };
 
 #endif

@@ -187,9 +187,9 @@ void setup() {
 					client.find("\r\n\r\n");
 
 					const size_t size = JSON_OBJECT_SIZE(14) + 290;
-					DynamicJsonBuffer buf(size);
-					JsonObject &geo = buf.parseObject(client);
-					if (geo.success()) {
+					DynamicJsonDocument geo(size);
+					auto error = deserializeJson(geo, client);
+					if (!error) {
 						// if success, decode...
 						cfg.lat = geo["lat"];
 						cfg.lon = geo["lon"];
@@ -270,7 +270,7 @@ void loop() {
 	swtch = false;
 
 	if (now - stats.last_fetch_conditions > cfg.conditions_interval) {
-		DBG(print(F("Updating conditions")));
+		DBG(println(F("Updating conditions...")));
 		if (provider.fetch_conditions(conditions)) {
 			if (cfg.dimmable || fade == cfg.bright)
 				update_display(screen);
@@ -280,7 +280,7 @@ void loop() {
 	}
 
 	if (now - stats.last_fetch_forecasts > cfg.forecasts_interval) {
-		DBG(print(F("Updating forecasts")));
+		DBG(println(F("Updating forecasts...")));
 		if (provider.fetch_forecasts(&forecasts[0], sizeof(forecasts)/sizeof(forecasts[0])))
 			stats.last_fetch_forecasts = now;
 		else

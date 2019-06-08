@@ -6,7 +6,7 @@ public:
 	bool read_file(const char *filename);
 
 protected:	
-	virtual void configure(class JsonObject &root) = 0;
+	virtual void configure(JsonObject &root) = 0;
 };
 
 class config: public Configuration {
@@ -23,7 +23,7 @@ public:
 	uint8_t rotate;
 	float lat, lon;
 
-	void configure(class JsonObject &o);
+	void configure(JsonObject &o);
 };
 
 extern config cfg;
