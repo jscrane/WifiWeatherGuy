@@ -7,3 +7,4 @@ spiffs.img
 platform.mk
 *.swp
 eagle/WifiWeatherGuy.pro
+eagle/WifiWeatherGuy.b#?
