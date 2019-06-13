@@ -136,6 +136,7 @@ void setup() {
 			f.print(body);
 			f.close();
 			server.send(200);
+			WiFi.setAutoConnect(false);
 			ESP.restart();
 		} else
 			server.send(400, "text/plain", "No body!");
