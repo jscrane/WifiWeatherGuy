@@ -121,10 +121,15 @@ void setup() {
 	if (*cfg.ssid) {
 		WiFi.setAutoReconnect(true);
 		WiFi.begin(cfg.ssid, cfg.password);
+		const char busy[] = "|/-\\";
+		int16_t y = tft.getCursorY();
 		for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) {
 			delay(500);
-			tft.print('.');
-			DBG(print('.'));
+			char c = busy[i % 4];
+			tft.print(c);
+			tft.setCursor(0, y);
+			DBG(print(c));
+			DBG(print('\r'));
 		}
 		connected = WiFi.status() == WL_CONNECTED;
 	}
