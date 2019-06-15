@@ -8,7 +8,9 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
+#include <SimpleTimer.h>
 
+#include "Stator.h"
 #include "Configuration.h"
 #include "state.h"
 #include "display.h"
@@ -50,14 +52,48 @@ void config::configure(JsonDocument &o) {
 	bright = o[F("bright")];
 	dim = o[F("dim")];
 	rotate = o[F("rotate")];
-	retry_interval = 1000 * (int)o[F("retry_interval")];
 }
 
-static volatile bool swtch;
-
+static Stator<bool> swtch;
 void ICACHE_RAM_ATTR swtch_handler() { swtch = true; }
 
 const char *config_file = "/config.json";
+static int screen = 0;
+static SimpleTimer timers;
+
+static void update_display() {
+	switch (screen) {
+	case 0:
+		display_weather(conditions);
+		break;
+	case 1:
+		display_astronomy(conditions);
+		break;
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+		display_forecast(forecasts[screen - 2]);
+		break;
+	case 6:
+		display_about(stats);
+		break;
+	}
+}
+
+static void update_conditions() {
+	DBG(println(F("Updating conditions...")));
+	if (provider.fetch_conditions(conditions)) {
+		update_display();
+		stats.last_fetch_conditions = millis();
+	}
+}
+
+static void update_forecasts() {
+	DBG(println(F("Updating forecasts...")));
+	if (provider.fetch_forecasts(&forecasts[0], sizeof(forecasts)/sizeof(forecasts[0])))
+		stats.last_fetch_forecasts = millis();
+}
 
 void setup() {
 	Serial.begin(115200);
@@ -210,26 +246,11 @@ cont:
 		stats.last_fetch_forecasts = -cfg.forecasts_interval;
 	}
 	attachInterrupt(SWITCH, swtch_handler, FALLING);
-}
 
-void update_display(int screen) {
-	switch (screen) {
-	case 0:
-		display_weather(conditions);
-		break;
-	case 1:
-		display_astronomy(conditions);
-		break;
-	case 2:
-	case 3:
-	case 4:
-	case 5:
-		display_forecast(forecasts[screen - 2]);
-		break;
-	case 6:
-		display_about(stats);
-		break;
-	}
+	timers.setInterval(cfg.conditions_interval, update_conditions);
+	timers.setInterval(cfg.forecasts_interval, update_forecasts);
+	update_conditions();
+	update_forecasts();
 }
 
 void loop() {
@@ -241,21 +262,19 @@ void loop() {
 		return;
 	}
 
-	static int screen = 0;
-	static uint32_t last_switch;
 	uint32_t now = millis(), ontime = now - display_on;
 	if (fade == cfg.dim) {
 		if (swtch) {
-			display_on = last_switch = now;
+			display_on = now;
 			fade = cfg.bright;
 			if (cfg.dimmable)
 				analogWrite(TFT_LED, fade);
 			else
-				update_display(screen);
+				update_display();
 		} else if (screen > 0) {
 			screen = 0;
 			if (cfg.dimmable)
-				update_display(screen);
+				update_display();
 		}
 	} else if (ontime > cfg.on_time) {
 		if (cfg.dimmable) {
@@ -265,31 +284,14 @@ void loop() {
 			tft.fillScreen(TFT_BLACK);
 			fade = cfg.dim;
 		}
-	} else if (swtch && now - last_switch > 250) {
-		display_on = last_switch = now;
+	} else if (swtch && swtch.changedAfter(250)) {
+		display_on = now;
 		if (screen >= 6)
 			screen = 0;
 		else
 			screen++;
-		update_display(screen);
+		update_display();
 	}
 	swtch = false;
-
-	if (now - stats.last_fetch_conditions > cfg.conditions_interval) {
-		DBG(println(F("Updating conditions...")));
-		if (provider.fetch_conditions(conditions)) {
-			if (cfg.dimmable || fade == cfg.bright)
-				update_display(screen);
-			stats.last_fetch_conditions = now;
-		} else
-			stats.last_fetch_conditions += cfg.retry_interval;
-	}
-
-	if (now - stats.last_fetch_forecasts > cfg.forecasts_interval) {
-		DBG(println(F("Updating forecasts...")));
-		if (provider.fetch_forecasts(&forecasts[0], sizeof(forecasts)/sizeof(forecasts[0])))
-			stats.last_fetch_forecasts = now;
-		else
-			stats.last_fetch_forecasts += cfg.retry_interval;
-	}
+	timers.run();
 }
