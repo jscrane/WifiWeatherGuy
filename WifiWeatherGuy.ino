@@ -164,8 +164,6 @@ void setup() {
 			char c = busy[i % 4];
 			tft.print(c);
 			tft.setCursor(0, y);
-			DBG(print(c));
-			DBG(print('\r'));
 		}
 		connected = WiFi.status() == WL_CONNECTED;
 	}
@@ -284,7 +282,7 @@ void loop() {
 			tft.fillScreen(TFT_BLACK);
 			fade = cfg.dim;
 		}
-	} else if (swtch && swtch.changedAfter(250)) {
+	} else if (swtch && swtch.changedAfter(500)) {
 		display_on = now;
 		if (screen >= 6)
 			screen = 0;
