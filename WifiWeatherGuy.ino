@@ -35,6 +35,10 @@ struct Conditions conditions;
 struct Forecast forecasts[4];
 struct Statistics stats;
 
+#if !defined(PROVIDER)
+#define PROVIDER OpenWeatherMap
+#endif
+
 PROVIDER provider;
 
 void config::configure(JsonDocument &o) {
