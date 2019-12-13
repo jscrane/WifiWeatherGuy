@@ -2,7 +2,7 @@
 *.cpp.d
 *.cpp.o
 spiffs.img
-*.txt.mk
+*.mk
 *.swp
 eagle/WifiWeatherGuy.pro
 eagle/WifiWeatherGuy.b#?
