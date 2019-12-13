@@ -348,8 +348,10 @@ void display_about(struct Statistics &s) {
 	tft.setCursor(1, 1);
 
 	uint32_t now = millis();
+#if defined(WWG_VERSION)
 	tft.print(F("Version: "));
-	tft.println(F(VERSION));
+	tft.println(F(WWG_VERSION));
+#endif
 	tft.print(F("Uptime: "));
 	tft.println(hms(now / 1000));
 	tft.println();
