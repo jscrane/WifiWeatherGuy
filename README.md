@@ -12,14 +12,17 @@ WeatherGuy for ESP8266.
 ## Software
 - Arduino 1.8.9
 - [TFT_eSPI library](https://github.com/Bodmer/TFT_eSPI) 1.4.20
-- [ESP8266 for Arduino](https://github.com/esp8266/Arduino.git) 2.6.2
+- [ESP8266 for Arduino](https://github.com/esp8266/Arduino.git) 2.6.3
 - [Arduino ESP8266 filesystem uploader](https://github.com/esp8266/arduino-esp8266fs-plugin)
 - [ArduinoJson](http://arduinojson.org/) 6.13.0
+- [Timezone](https://github.com/JChristensen/Timezone) 1.2.3
+- [Time](https://github.com/PaulStoffregen/Time) 1.6
 
 ## Installation
-- Get an API key for your Provider
+- Get an API key for your Provider (the default is OpenWeatherMap)
 - Edit data/config.json with your preferences
-- Edit Makefile to configure your display
+- Configure your display in TFT_eSPI/User_Setup.h (if using the Arduino IDE), otherwise edit Makefile
+- Configure your timezone in zone.h
 - Upload the filesystem (Tools > ESP8266 Sketch Data Upload)
 - Upload the sketch
 

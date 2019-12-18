@@ -9,6 +9,8 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
 #include <SimpleTimer.h>
+#include <TimeLib.h>
+#include <Timezone.h>
 
 #include "Stator.h"
 #include "Configuration.h"
