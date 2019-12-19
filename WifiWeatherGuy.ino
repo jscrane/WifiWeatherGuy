@@ -87,6 +87,7 @@ static void update_display() {
 	}
 }
 
+// timer callbacks
 static void update_conditions() {
 	DBG(println(F("Updating conditions...")));
 	if (provider.fetch_conditions(conditions)) {
@@ -99,6 +100,23 @@ static void update_forecasts() {
 	DBG(println(F("Updating forecasts...")));
 	if (provider.fetch_forecasts(&forecasts[0], sizeof(forecasts)/sizeof(forecasts[0])))
 		stats.last_fetch_forecasts = millis();
+}
+
+static void next_fade() {
+	analogWrite(TFT_LED, --fade);
+	if (fade == cfg.dim && screen > 0) {
+		screen = 0;
+		update_display();
+	}
+}
+
+static void turn_off() {
+	if (cfg.dimmable) {
+		timers.setTimer(25, next_fade, cfg.bright - cfg.dim);
+	} else {
+		tft.fillScreen(TFT_BLACK);
+		fade = cfg.dim;
+	}
 }
 
 void setup() {
@@ -253,6 +271,8 @@ cont:
 
 	timers.setInterval(cfg.conditions_interval, update_conditions);
 	timers.setInterval(cfg.forecasts_interval, update_forecasts);
+	timers.setTimeout(cfg.on_time, turn_off);
+
 	update_conditions();
 	update_forecasts();
 }
@@ -266,36 +286,22 @@ void loop() {
 		return;
 	}
 
-	uint32_t now = millis(), ontime = now - display_on;
-	if (fade == cfg.dim) {
-		if (swtch) {
-			display_on = now;
+	if (swtch) {
+		if (fade == cfg.dim) {
 			fade = cfg.bright;
 			if (cfg.dimmable)
 				analogWrite(TFT_LED, fade);
 			else
 				update_display();
-		} else if (screen > 0) {
-			screen = 0;
-			if (cfg.dimmable)
-				update_display();
+			timers.setTimeout(cfg.on_time, turn_off);
+		} else if (swtch.changedAfter(500)) {
+			if (screen >= 6)
+				screen = 0;
+			else
+				screen++;
+			update_display();
 		}
-	} else if (ontime > cfg.on_time) {
-		if (cfg.dimmable) {
-			analogWrite(TFT_LED, --fade);
-			delay(25);
-		} else {
-			tft.fillScreen(TFT_BLACK);
-			fade = cfg.dim;
-		}
-	} else if (swtch && swtch.changedAfter(500)) {
-		display_on = now;
-		if (screen >= 6)
-			screen = 0;
-		else
-			screen++;
-		update_display();
+		swtch = false;
 	}
-	swtch = false;
 	timers.run();
 }

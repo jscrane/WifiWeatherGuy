@@ -17,6 +17,7 @@ WeatherGuy for ESP8266.
 - [ArduinoJson](http://arduinojson.org/) 6.13.0
 - [Timezone](https://github.com/JChristensen/Timezone) 1.2.3
 - [Time](https://github.com/PaulStoffregen/Time) 1.6
+- [SimpleTimer](https://github.com/schinken/SimpleTimer)
 
 ## Installation
 - Get an API key for your Provider (the default is OpenWeatherMap)
