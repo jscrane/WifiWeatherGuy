@@ -3,14 +3,11 @@
 #include <FS.h>
 #include <time.h>
 #include <TFT_eSPI.h>
-#include <TimeLib.h>
-#include <Timezone.h>
 
 #include "Configuration.h"
 #include "display.h"
 #include "dbg.h"
 #include "state.h"
-#include "zone.h"
 
 #define ICON_W		50
 #define ICON_H		ICON_W
@@ -142,17 +139,13 @@ static int val_len(int b) {
 	return 3;
 }
 
-static Timezone tz(summer, winter);
-
-static void display_time(time_t &epoch, bool metric) {
-	time_t local = tz.toLocal(epoch);
-
+static void display_time(time_t &local, bool metric) {
 	char buf[32];
 	strftime(buf, sizeof(buf), metric? "%H:%M": "%I:%M%p", localtime(&local));
 	tft.setCursor(centre_text(buf, tft.width()/2, 1), tft.height() - 20);
 	tft.print(buf);
 
-	strftime(buf, sizeof(buf), "%a %d", localtime(&local));
+	strftime(buf, sizeof(buf), "%a %e", localtime(&local));
 	tft.setCursor(centre_text(buf, tft.width()/2, 1), tft.height() - 10);
 	tft.print(buf);
 }

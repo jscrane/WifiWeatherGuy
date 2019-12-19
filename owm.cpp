@@ -2,14 +2,19 @@
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <time.h>
+#include <TimeLib.h>
+#include <Timezone.h>
 
 #include "Configuration.h"
 #include "state.h"
 #include "providers.h"
 #include "dbg.h"
+#include "zone.h"
 
 const char host[] = "api.openweathermap.org";
 static bool forecast;
+
+static Timezone tz(summer, winter);
 
 void OpenWeatherMap::on_connect(WiFiClient &client, bool conds) {
 	client.print(F("/data/2.5/"));
@@ -41,7 +46,8 @@ void OpenWeatherMap::on_connect(WiFiClient &client, bool conds) {
 }
 
 bool OpenWeatherMap::update_conditions(JsonDocument &root, struct Conditions &c) {
-	time_t epoch = (time_t)root[F("dt")];
+	time_t epoch = tz.toLocal((time_t)root[F("dt")]);
+
 	if (epoch <= c.epoch)
 		return false;
 
@@ -71,12 +77,12 @@ bool OpenWeatherMap::update_conditions(JsonDocument &root, struct Conditions &c)
 	c.wind_degrees = wind[F("deg")];
 
 	const JsonObject &sys = root["sys"];
-	time_t sunrise = (time_t)sys["sunrise"];
+	time_t sunrise = tz.toLocal((time_t)sys["sunrise"]);
 	struct tm *sr = gmtime(&sunrise);
 	c.sunrise_hour = sr->tm_hour;
 	c.sunrise_minute = sr->tm_min;
 
-	time_t sunset = (time_t)sys["sunset"];
+	time_t sunset = tz.toLocal((time_t)sys["sunset"]);
 	struct tm *ss = gmtime(&sunset);
 	c.sunset_hour = ss->tm_hour;
 	c.sunset_minute = ss->tm_min;
