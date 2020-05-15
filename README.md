@@ -11,11 +11,11 @@ WeatherGuy for ESP8266.
 
 ## Software
 - Arduino 1.8.9
-- [TFT_eSPI library](https://github.com/Bodmer/TFT_eSPI) 1.4.20
-- [ESP8266 for Arduino](https://github.com/esp8266/Arduino.git) 2.6.3
+- [TFT_eSPI library](https://github.com/Bodmer/TFT_eSPI) 2.2.8
+- [ESP8266 for Arduino](https://github.com/esp8266/Arduino.git) 2.7.1
 - [Arduino ESP8266 filesystem uploader](https://github.com/esp8266/arduino-esp8266fs-plugin)
-- [ArduinoJson](http://arduinojson.org/) 6.13.0
-- [Timezone](https://github.com/JChristensen/Timezone) 1.2.3
+- [ArduinoJson](http://arduinojson.org/) 6.15.1
+- [Timezone](https://github.com/JChristensen/Timezone) 1.2.4
 - [Time](https://github.com/PaulStoffregen/Time) 1.6
 - [SimpleTimer](https://github.com/schinken/SimpleTimer)
 
