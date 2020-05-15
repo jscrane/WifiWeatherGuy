@@ -12,7 +12,7 @@
 #include <TimeLib.h>
 #include <Timezone.h>
 
-#include "Stator.h"
+#include "Switch.h"
 #include "Configuration.h"
 #include "state.h"
 #include "display.h"
@@ -60,8 +60,8 @@ void config::configure(JsonDocument &o) {
 	rotate = o[F("rotate")];
 }
 
-static Stator<bool> swtch;
-void ICACHE_RAM_ATTR swtch_handler() { swtch = true; }
+Switch swtch(500);
+void ICACHE_RAM_ATTR swtch_handler() { swtch.on(); }
 
 const char *config_file = "/config.json";
 static int screen = 0;
@@ -294,14 +294,13 @@ void loop() {
 			else
 				update_display();
 			timers.setTimeout(cfg.on_time, turn_off);
-		} else if (swtch.changedAfter(500)) {
+		} else {
 			if (screen >= 6)
 				screen = 0;
 			else
 				screen++;
 			update_display();
 		}
-		swtch = false;
 	}
 	timers.run();
 }
