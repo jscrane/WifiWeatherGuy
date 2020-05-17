@@ -219,6 +219,7 @@ void setup() {
 		ERR(println(F("Error starting mDNS")));
 
 	if (!connected) {
+		WiFi.mode(WIFI_AP);
 		WiFi.softAP(cfg.hostname);
 		tft.println(F("Connect to SSID"));
 		tft.println(cfg.hostname);
