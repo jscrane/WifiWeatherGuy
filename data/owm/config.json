@@ -2,7 +2,7 @@
  "ssid": "",
  "password": "",
  "key": "",
- "nearest": false,
+ "nearest": true,
  "station": "",
  "hostname": "WifiWeatherGuy",
  "metric": 1,
