@@ -61,18 +61,18 @@ void config::configure(JsonDocument &o) {
 	rotate = o[F("rotate")];
 
 	const JsonObject &s = o[F("summer")];
-	summer.week = s[F("week")] | 0;
-	summer.dow = s[F("dow")] | 1;
-	summer.month = s[F("month")] | 1;
-	summer.hour = s[F("hour")] | 0;
-	summer.offset = s[F("offset")] | 0;
+	summer.week = (int)s[F("week")] | 0;
+	summer.dow = (int)s[F("dow")] | 1;
+	summer.month = (int)s[F("month")] | 1;
+	summer.hour = (int)s[F("hour")] | 0;
+	summer.offset = (int)s[F("offset")] | 0;
 
 	const JsonObject &w = o[F("winter")];
-	winter.week = w[F("week")] | 0;
-	winter.dow = w[F("dow")] | 1;
-	winter.month = w[F("month")] | 1;
-	winter.hour = w[F("hour")] | 0;
-	winter.offset = w[F("offset")] | 0;
+	winter.week = (int)w[F("week")] | 0;
+	winter.dow = (int)w[F("dow")] | 1;
+	winter.month = (int)w[F("month")] | 1;
+	winter.hour = (int)w[F("hour")] | 0;
+	winter.offset = (int)w[F("offset")] | 0;
 
 	::tz = new Timezone(summer, winter);
 }
