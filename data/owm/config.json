@@ -2,9 +2,23 @@
  "ssid": "",
  "password": "",
  "key": "",
+ "hostname": "WifiWeatherGuy",
  "nearest": true,
  "station": "",
- "hostname": "WifiWeatherGuy",
+ "summer": {
+  "week": 0,
+  "dow": 1,
+  "month": 3,
+  "hour": 2,
+  "offset": 60
+ },
+ "winter": {
+  "week": 0,
+  "dow": 1,
+  "month": 10,
+  "hour": 1,
+  "offset": 0
+ },
  "metric": 1,
  "conditions_interval": 1200,
  "forecasts_interval": 14400,

@@ -23,9 +23,12 @@ public:
 	uint8_t rotate;
 	float lat, lon;
 
+	TimeChangeRule summer, winter;
+
 	void configure(class JsonDocument &doc);
 };
 
 extern config cfg;
+extern Timezone *tz;
 
 #endif

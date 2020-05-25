@@ -22,16 +22,27 @@ function load_config() {
 }
 function save_config() {
   form = document.getElementById('config');
-  data = [].reduce.call(form.elements, (data, element) => {
+  data = [].reduce.call(form.elements, (o, element) => {
     if (element.id && element.value) {
       if (element.type == 'checkbox') {
-        data[element.id] = (element.checked? 1: 0);
+        o[element.id] = (element.checked? 1: 0);
       } else {
-        data[element.id] = element.value;
+        o[element.id] = element.value;
       }
     }
-    return data;
+    return o;
   }, {});
+
+  data['summer'] = [].reduce.call(document.getElementsByClassName('smmr'), (o, element) => {
+    o[element.id] = element.value;
+    return o;
+  }, {});
+
+  data['winter'] = [].reduce.call(document.getElementsByClassName('wntr'), (o, element) => {
+    o[element.id] = element.value;
+    return o;
+  }, {});
+
   xhr = new XMLHttpRequest();
   xhr.open("POST", "/config", true);
   xhr.setRequestHeader("Content-Type", "application/json");
@@ -55,6 +66,9 @@ function chk_nearest() {
 <legend>Configuration</legend>
 <table>
   <tr>
+    <td colspan="3" align="center" style="background-color:lightgray">Networking</td>
+  </tr>
+  <tr>
     <td>SSID:</td>
     <td><input type="text" id="ssid"></td>
     <td><img src="info.png" title="Your Wifi network name"/></td>
@@ -66,8 +80,16 @@ function chk_nearest() {
   </tr>
   <tr>
     <td>API Key:</td>
-    <td><input type="text" id="key"></td>
+    <td><input type="text" maxlength="32" minlength="32" size="32" id="key"></td>
     <td><img src="info.png" title="Your Open Weather Map API Key"/></td>
+  </tr>
+  <tr>
+    <td>Hostname:</td>
+    <td><input type="text" id="hostname"></td>
+    <td><img src="info.png" title="My hostname on your network"/></td>
+  </tr>
+  <tr>
+    <td colspan="3" align="center" style="background-color:lightgray">Location</td>
   </tr>
   <tr>
     <td>Nearest:</td>
@@ -75,14 +97,108 @@ function chk_nearest() {
     <td><img src="info.png" title="Whether to use the nearest Weather Station"/></td>
   </tr>
   <tr>
-    <td>Location:</td>
+    <td>Station:</td>
     <td><input type="text" id="station"></td>
     <td><img src="info.png" title="City or Weather Station to use"/></td>
   </tr>
   <tr>
-    <td>Hostname:</td>
-    <td><input type="text" id="hostname"></td>
-    <td><img src="info.png" title="My hostname on your network"/></td>
+    <td>Summer:</td>
+    <td>
+      <table id="summer">
+      <tr>
+	<td>
+          <select class="smmr" id="week">
+            <option value="0">Last</option>
+            <option value="1">First</option>
+            <option value="2">Second</option>
+            <option value="3">Third</option>
+            <option value="4">Fourth</option>
+	  </select>
+	</td>
+	<td>
+          <select class="smmr" id="dow">
+            <option value="1">Sun</option>
+            <option value="2">Mon</option>
+            <option value="3">Tue</option>
+            <option value="4">Wed</option>
+            <option value="5">Thu</option>
+            <option value="6">Fri</option>
+            <option value="7">Sat</option>
+	  </select>
+	</td>
+	<td>
+          <select class="smmr" id="month">
+            <option value="1">Jan</option>
+            <option value="2">Feb</option>
+            <option value="3">Mar</option>
+            <option value="4">Apr</option>
+            <option value="5">May</option>
+            <option value="6">Jun</option>
+            <option value="7">Jul</option>
+            <option value="8">Aug</option>
+            <option value="9">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
+	  </select>
+	</td>
+        <td><input type="number" min=0 max=23 class="smmr" id="hour"></td>
+        <td><input type="number" min=0 max=1560 step=15 class="smmr" id="offset"></td>
+      </tr>
+      </table>
+    </td>
+    <td><img src="info.png" title="Start of Summer time and its offset from UTC"/></td>
+  </tr>
+  <tr>
+    <td>Winter:</td>
+    <td>
+      <table id="winter">
+      <tr>
+	<td>
+          <select class="wntr" id="week">
+            <option value="0">Last</option>
+            <option value="1">First</option>
+            <option value="2">Second</option>
+            <option value="3">Third</option>
+            <option value="4">Fourth</option>
+	  </select>
+	</td>
+	<td>
+          <select class="wntr" id="dow">
+            <option value="1">Sun</option>
+            <option value="2">Mon</option>
+            <option value="3">Tue</option>
+            <option value="4">Wed</option>
+            <option value="5">Thu</option>
+            <option value="6">Fri</option>
+            <option value="7">Sat</option>
+	  </select>
+	</td>
+	<td>
+          <select class="wntr" id="month">
+            <option value="1">Jan</option>
+            <option value="2">Feb</option>
+            <option value="3">Mar</option>
+            <option value="4">Apr</option>
+            <option value="5">May</option>
+            <option value="6">Jun</option>
+            <option value="7">Jul</option>
+            <option value="8">Aug</option>
+            <option value="9">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
+	  </select>
+	</td>
+        <td><input type="number" min=0 max=23 class="wntr" id="hour"></td>
+        <td><input type="number" min=0 max=1560 step=15 class="wntr" id="offset"></td>
+      </tr>
+      </table>
+    </td>
+    <td><img src="info.png" title="Start of Winter time and its offset from UTC"/></td>
+  </tr>
+  <tr>
+    <td colspan="3" align="center" style="background-color:lightgray">Display</td>
   </tr>
   <tr>
     <td>Metric:</td>
@@ -125,7 +241,7 @@ function chk_nearest() {
     <td><img src="info.png" title="Display rotation (0-3)"/></td>
   </tr>
   <tr>
-    <td colspan="2" align="center">
+    <td colspan="3" align="center" style="background-color:lightgray">
       <button type="submit" onclick="save_config()">Update</button>
     </td>
   </tr>
@@ -142,7 +258,7 @@ function chk_nearest() {
     <td><input name="image" type="file" accept=".ino.bin"/></td>
   </tr>
   <tr>
-    <td colspan="2" align="center">
+    <td colspan="2" align="center" style="background-color:lightgray">
       <input type="submit" value="Upgrade"/>
     </td>
   </tr>

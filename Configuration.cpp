@@ -1,5 +1,6 @@
 #include <FS.h>
 #include <ArduinoJson.h>
+#include <Timezone.h>
 #include "Configuration.h"
 #include "dbg.h"
 
@@ -11,7 +12,7 @@ bool Configuration::read_file(const char *filename) {
 		return false;
 	}
 
-	DynamicJsonDocument doc(JSON_OBJECT_SIZE(15) + 300);
+	DynamicJsonDocument doc(2*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(15) + 700);
 	auto error = deserializeJson(doc, f);
 	f.close();
 	if (error) {

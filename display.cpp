@@ -3,6 +3,7 @@
 #include <FS.h>
 #include <time.h>
 #include <TFT_eSPI.h>
+#include <Timezone.h>
 
 #include "Configuration.h"
 #include "display.h"

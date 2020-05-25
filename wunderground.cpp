@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <time.h>
+#include <Timezone.h>
 
 #include "Configuration.h"
 #include "dbg.h"

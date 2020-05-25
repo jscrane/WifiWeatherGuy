@@ -33,6 +33,7 @@ uint8_t fade;
 bool connected, debug;
 
 config cfg;
+Timezone *tz;
 struct Conditions conditions;
 struct Forecast forecasts[4];
 struct Statistics stats;
@@ -58,6 +59,22 @@ void config::configure(JsonDocument &o) {
 	bright = o[F("bright")];
 	dim = o[F("dim")];
 	rotate = o[F("rotate")];
+
+	const JsonObject &s = o[F("summer")];
+	summer.week = s[F("week")] | 0;
+	summer.dow = s[F("dow")] | 1;
+	summer.month = s[F("month")] | 1;
+	summer.hour = s[F("hour")] | 0;
+	summer.offset = s[F("offset")] | 0;
+
+	const JsonObject &w = o[F("winter")];
+	winter.week = w[F("week")] | 0;
+	winter.dow = w[F("dow")] | 1;
+	winter.month = w[F("month")] | 1;
+	winter.hour = w[F("hour")] | 0;
+	winter.offset = w[F("offset")] | 0;
+
+	::tz = new Timezone(summer, winter);
 }
 
 Switch swtch(500);
