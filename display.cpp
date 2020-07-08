@@ -13,6 +13,14 @@
 #define ICON_W		50
 #define ICON_H		ICON_W
 
+#if TFT_WIDTH < 200
+#define SMALL	1
+#define LARGE	2
+#else
+#define SMALL	2
+#define LARGE	4
+#endif
+
 // These read 16- and 32-bit types from the SD card file.
 // BMP data is stored little-endian, Arduino is little-endian too.
 // May need to reverse subscript order if porting elsewhere.
@@ -123,31 +131,26 @@ static int display_bmp(const char *filename, uint16_t x, uint16_t y) {
 	return 0;
 }
 
-static int centre_text(const char *s, int x, int size) {
-	return x - (strlen(s) * size * 6) / 2;
+static int centre_text(const char *s) {
+	return (tft.width() - tft.textWidth(s)) / 2;
 }
 
-static int right(int n, int x, int size) {
-	return x - n * size * 6;
-}
-
-static int val_len(int b) {
-	if (b >= 1000) return 4;
-	if (b >= 100) return 3;
-	if (b >= 10) return 2;
-	if (b >= 0) return 1;
-	if (b > -10) return 2;
-	return 3;
+static int width(char c) {
+	char buf[2];
+	buf[0] = c;
+	buf[1] = 0;
+	return tft.textWidth(buf);
 }
 
 static void display_time(time_t &local, bool metric) {
+	tft.setTextSize(SMALL);
 	char buf[32];
 	strftime(buf, sizeof(buf), metric? "%H:%M": "%I:%M%p", localtime(&local));
-	tft.setCursor(centre_text(buf, tft.width()/2, 1), tft.height() - 20);
+	tft.setCursor(centre_text(buf), tft.height() - 2*tft.fontHeight());
 	tft.print(buf);
 
 	strftime(buf, sizeof(buf), "%a %e", localtime(&local));
-	tft.setCursor(centre_text(buf, tft.width()/2, 1), tft.height() - 10);
+	tft.setCursor(centre_text(buf), tft.height() - tft.fontHeight());
 	tft.print(buf);
 }
 
@@ -192,34 +195,41 @@ static const __FlashStringHelper *wind_dir(int d) {
 }
 
 static void display_wind_speed(int speed, int deg, bool metric) {
-	tft.setTextSize(2);
+	tft.setTextSize(LARGE);
+	int h = tft.fontHeight();
 	tft.setCursor(1, 1);
 	tft.print(speed);
-	tft.setTextSize(1);
+	tft.setTextSize(SMALL);
 	tft.print(metric? F("kph"): F("mph"));
-	tft.setCursor(1, 17);
+	tft.setCursor(1, h+1);
 	tft.print(wind_dir(deg));
 }
 
 static void display_temperature(int temp, int temp_min, bool metric) {
-	tft.setTextSize(2);
-	tft.setCursor(1, tft.height() - 16);
+	tft.setTextSize(LARGE);
+	int h = tft.fontHeight();
+	tft.setCursor(1, tft.height() - h);
 	tft.print(temp);
-	tft.setTextSize(1);
+	tft.setTextSize(SMALL);
 	tft.print(metric? 'C': 'F');
 	if (temp > temp_min) {
-		tft.setCursor(1, tft.height() - 24);
+		tft.setCursor(1, tft.height() - h - tft.fontHeight());
 		tft.print(temp_min);
 	}
 }
 
 static void display_humidity(int humidity) {
-	tft.setTextSize(2);
-	tft.setCursor(right(val_len(humidity), tft.width(), 2) - 6, tft.height() - 16);
-	tft.print(humidity);
-	tft.setTextSize(1);
-	tft.setCursor(tft.width() - 6, tft.height() - 16);
+	tft.setTextSize(LARGE);
+	int h = tft.fontHeight();
+	tft.setTextSize(SMALL);
+	int w = width('%');
+	tft.setCursor(tft.width() - w, tft.height() - h);
 	tft.print('%');
+	tft.setTextSize(LARGE);
+	char hum[8];
+	snprintf(hum, sizeof(hum), "%d", humidity);
+	tft.setCursor(tft.width() - tft.textWidth(hum) - w, tft.height() - h);
+	tft.print(hum);
 }
 
 void display_weather(struct Conditions &c) {
@@ -230,23 +240,31 @@ void display_weather(struct Conditions &c) {
 	display_temperature(c.temp, c.feelslike, cfg.metric);
 	display_humidity(c.humidity);
 
-	tft.setTextSize(2);
-	tft.setCursor(right(val_len(c.pressure), tft.width(), 2)-12, 1);
+	tft.setTextSize(SMALL);
+	const char *unit = cfg.metric? "mb": "in";
+	int uw = tft.textWidth(unit);
+	tft.setTextSize(LARGE);
+	char pres[8];
+	snprintf(pres, sizeof(pres), "%d", c.pressure);
+	tft.setCursor(tft.width() - tft.textWidth(pres) - uw, 1);
 	tft.print(c.pressure);
-	tft.setTextSize(1);
-	tft.print(cfg.metric? F("mb"): F("in"));
+	tft.setTextSize(SMALL);
+	tft.print(unit);
+	const char *trend = 0;
 	if (c.pressure_trend == 1) {
-		tft.setCursor(right(6, tft.width(), 1), 17);
-		tft.print(F("rising"));
+		trend = "rising";
 	} else if (c.pressure_trend == -1) {
-		tft.setCursor(right(7, tft.width(), 1), 17);
-		tft.print(F("falling"));
+		trend = "falling";
+	}
+	if (trend) {
+		tft.setCursor(tft.width() - tft.textWidth(trend), tft.fontHeight()+1);
+		tft.print(trend);
 	}
 
-	unsigned by = (tft.height() - ICON_H)/2, cy = by - 10, wy = by + ICON_H;
-	tft.setCursor(centre_text(c.city, tft.width()/2, 1), cy);
+	unsigned by = (tft.height() - ICON_H)/2, cy = by - tft.fontHeight(), wy = by + ICON_H;
+	tft.setCursor(centre_text(c.city), cy);
 	tft.print(c.city);
-	tft.setCursor(centre_text(c.weather, tft.width()/2, 1), wy);
+	tft.setCursor(centre_text(c.weather), wy);
 	tft.print(c.weather);
 	display_bmp(c.icon, (tft.width() - ICON_W)/2, by);
 
@@ -259,40 +277,41 @@ void display_astronomy(struct Conditions &c) {
 	tft.fillScreen(TFT_BLACK);
 	tft.setTextColor(TFT_WHITE);
 
-	tft.setTextSize(2);
+	tft.setTextSize(LARGE);
+	int h = tft.fontHeight();
 	tft.setCursor(1, 1);
 	tft.print(F("sun"));
-	tft.setCursor(right(4, tft.width(), 2), 1);
-	tft.print(F("moon"));
-	tft.setTextSize(1);
-	tft.setCursor(c.sunrise_hour < 10? 7: 1, 17);
+	const char *moon = "moon";
+	tft.setCursor(tft.width() - tft.textWidth(moon), 1);
+	tft.print(moon);
+	tft.setTextSize(SMALL);
+	tft.setCursor(c.sunrise_hour < 10? 1+width(c.sunrise_hour): 1, 1+h);
 	tft.print(c.sunrise_hour);
 	tft.print(':');
 	if (c.sunrise_minute < 10) tft.print('0');
 	tft.print(c.sunrise_minute);
-	tft.setCursor(1, 25);
+	tft.setCursor(1, 1+h+tft.fontHeight());
 	tft.print(c.sunset_hour);
 	tft.print(':');
 	if (c.sunset_minute < 10) tft.print('0');
 	tft.print(c.sunset_minute);
 
 	const char *rise = "rise";
-	tft.setCursor(centre_text(rise, tft.width()/2, 1), 17);
+	tft.setCursor(centre_text(rise), 1+h);
 	tft.print(rise);
 	const char *set = "set";
-	tft.setCursor(centre_text(set, tft.width()/2, 1), 25);
+	tft.setCursor(centre_text(set), 1+h+tft.fontHeight());
 	tft.print(set);
 
 	int rl = strlen(c.moonrise_hour);
 	if (rl > 0) {
-		tft.setCursor(right(3 + rl, tft.width(), 1), 17);
-		tft.print(c.moonrise_hour);
-		tft.print(':');
-		tft.print(c.moonrise_minute);
-		tft.setCursor(right(3 + strlen(c.moonset_hour), tft.width(), 1), 25);
-		tft.print(c.moonset_hour);
-		tft.print(':');
-		tft.print(c.moonset_minute);
+		char buf[16];
+		snprintf(buf, sizeof(buf), "%s:%s", c.moonrise_hour, c.moonrise_minute);
+		tft.setCursor(tft.width() - tft.textWidth(buf), 1+h);
+		tft.print(buf);
+		snprintf(buf, sizeof(buf), "%s:%s", c.moonset_hour, c.moonset_minute);
+		tft.setCursor(tft.width() - tft.textWidth(buf), 1+h+tft.fontHeight());
+		tft.print(buf);
 	}
 
 	char buf[32];
@@ -300,7 +319,7 @@ void display_astronomy(struct Conditions &c) {
 	unsigned by = (tft.height() - ICON_H)/2, ay = by + ICON_H;
 	display_bmp(buf, (tft.width() - ICON_W)/2, by);
 
-	tft.setCursor(centre_text(c.moon_phase, tft.width()/2, 1), ay);
+	tft.setCursor(centre_text(c.moon_phase), ay);
 	tft.print(c.moon_phase);
 
 	display_time(c.epoch, cfg.metric);
@@ -314,17 +333,17 @@ void display_forecast(struct Forecast &f) {
 	display_temperature(f.temp_high, f.temp_low, cfg.metric);
 	display_humidity(f.humidity);
 
-	tft.setTextSize(2);
-	tft.setCursor(right(3, tft.width(), 2), 1);
+	tft.setTextSize(LARGE);
 	char day[4];
 	strftime(day, sizeof(day), "%a", localtime(&f.epoch));
+	tft.setCursor(tft.width() - tft.textWidth(day), 1);
 	tft.print(day);
 
-	tft.setTextSize(1);
+	tft.setTextSize(SMALL);
 	unsigned by = (tft.height() - ICON_H)/2, wy = by + ICON_H;
 	display_bmp(f.icon, (tft.width() - ICON_W)/2, by);
 
-	tft.setCursor(centre_text(f.conditions, tft.width()/2, 1), wy);
+	tft.setCursor(centre_text(f.conditions), wy);
 	tft.print(f.conditions);
 
 	display_time(f.epoch, cfg.metric);
