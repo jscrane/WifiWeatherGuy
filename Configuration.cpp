@@ -1,11 +1,11 @@
-#include <FS.h>
+#include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <Timezone.h>
 #include "Configuration.h"
 #include "dbg.h"
 
 bool Configuration::read_file(const char *filename) {
-	File f = SPIFFS.open(filename, "r");
+	File f = LittleFS.open(filename, "r");
 	if (!f) {
 		ERR(print(F("failed to open: ")));
 		ERR(println(filename));

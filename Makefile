@@ -20,12 +20,12 @@ t ?= owm
 
 ifeq ($t,wunderground)
 CPPFLAGS += -DPROVIDER=Wunderground
-SPIFFS_DIR := data/wunderground
+FS_DIR := data/wunderground
 endif
 
 ifeq ($t,owm)
 CPPFLAGS += $(XCPPFLAGS) -DPROVIDER=OpenWeatherMap
-SPIFFS_DIR := data/owm
+FS_DIR := data/owm
 endif
 
 include esp8266.mk

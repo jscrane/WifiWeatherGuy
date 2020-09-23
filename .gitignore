@@ -2,6 +2,7 @@
 *.cpp.d
 *.cpp.o
 spiffs.img
+littlefs.img
 *.mk
 *.swp
 eagle/WifiWeatherGuy.pro

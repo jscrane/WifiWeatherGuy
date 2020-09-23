@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <string.h>
-#include <FS.h>
+#include <LittleFS.h>
 #include <time.h>
 #include <TFT_eSPI.h>
 #include <Timezone.h>
@@ -48,7 +48,7 @@ static int display_bmp(const char *filename, uint16_t x, uint16_t y) {
 	strcpy(fbuf, "/");
 	strcat(fbuf, filename);
 	strcat(fbuf, ".bmp");
-	File f = SPIFFS.open(fbuf, "r");
+	File f = LittleFS.open(fbuf, "r");
 	if (!f) {
 		ERR(print(F("file.open!")));
 		ERR(print(' '));

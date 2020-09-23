@@ -1,6 +1,6 @@
 #include <ArduinoJson.h>
 #include <SPI.h>
-#include <FS.h>
+#include <LittleFS.h>
 #include <Adafruit_GFX.h>
 #include <TFT_eSPI.h>
 #include <ESP8266WiFi.h>
@@ -145,9 +145,9 @@ void setup() {
 	pinMode(SWITCH, INPUT_PULLUP);
 	debug = digitalRead(SWITCH) == LOW;
 
-	bool result = SPIFFS.begin();
+	bool result = LittleFS.begin();
 	if (!result) {
-		ERR(print(F("SPIFFS!")));
+		ERR(print(F("LittleFS!")));
 		return;
 	}
 
@@ -212,7 +212,7 @@ void setup() {
 	server.on("/config", HTTP_POST, []() {
 		if (server.hasArg("plain")) {
 			String body = server.arg("plain");
-			File f = SPIFFS.open(config_file, "w");
+			File f = LittleFS.open(config_file, "w");
 			f.print(body);
 			f.close();
 			server.send(200);
@@ -221,10 +221,10 @@ void setup() {
 		} else
 			server.send(400, "text/plain", "No body!");
 	});
-	server.serveStatic("/", SPIFFS, "/index.html");
-	server.serveStatic("/config", SPIFFS, config_file);
-	server.serveStatic("/js/transparency.min.js", SPIFFS, "/transparency.min.js");
-	server.serveStatic("/info.png", SPIFFS, "/info.png");
+	server.serveStatic("/", LittleFS, "/index.html");
+	server.serveStatic("/config", LittleFS, config_file);
+	server.serveStatic("/js/transparency.min.js", LittleFS, "/transparency.min.js");
+	server.serveStatic("/info.png", LittleFS, "/info.png");
 
 	httpUpdater.setup(&server);
 	server.begin();
