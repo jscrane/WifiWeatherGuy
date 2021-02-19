@@ -19,8 +19,13 @@
 #include "dbg.h"
 #include "providers.h"
 
+#if !defined(TFT_LED)
 #define TFT_LED	D2
+#endif
+
+#if !defined(SWITCH)
 #define SWITCH	D3
+#endif
 
 TFT_eSPI tft;
 MDNSResponder mdns;
