@@ -13,13 +13,8 @@
 #define ICON_W		50
 #define ICON_H		ICON_W
 
-#if TFT_WIDTH < 200
 #define SMALL	1
 #define LARGE	2
-#else
-#define SMALL	2
-#define LARGE	4
-#endif
 
 // These read 16- and 32-bit types from the SD card file.
 // BMP data is stored little-endian, Arduino is little-endian too.
@@ -223,12 +218,12 @@ static void display_humidity(int humidity) {
 	int h = tft.fontHeight();
 	tft.setTextSize(SMALL);
 	int w = width('%');
-	tft.setCursor(tft.width() - w, tft.height() - h);
+	tft.setCursor(tft.width() - w - 1, tft.height() - h);
 	tft.print('%');
 	tft.setTextSize(LARGE);
 	char hum[8];
 	snprintf(hum, sizeof(hum), "%d", humidity);
-	tft.setCursor(tft.width() - tft.textWidth(hum) - w, tft.height() - h);
+	tft.setCursor(tft.width() - tft.textWidth(hum) - w - 1, tft.height() - h);
 	tft.print(hum);
 }
 
@@ -246,7 +241,7 @@ void display_weather(struct Conditions &c) {
 	tft.setTextSize(LARGE);
 	char pres[8];
 	snprintf(pres, sizeof(pres), "%d", c.pressure);
-	tft.setCursor(tft.width() - tft.textWidth(pres) - uw, 1);
+	tft.setCursor(tft.width() - tft.textWidth(pres) - uw - 1, 1);
 	tft.print(c.pressure);
 	tft.setTextSize(SMALL);
 	tft.print(unit);

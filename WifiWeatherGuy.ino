@@ -147,6 +147,10 @@ void setup() {
 	tft.setTextColor(TFT_WHITE, TFT_BLACK);
 	tft.setCursor(0, 0);
 
+#if defined(FONT)
+	tft.setTextFont(FONT);
+#endif
+
 	pinMode(SWITCH, INPUT_PULLUP);
 	debug = digitalRead(SWITCH) == LOW;
 
