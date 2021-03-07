@@ -218,12 +218,12 @@ static void display_humidity(int humidity) {
 	int h = tft.fontHeight();
 	tft.setTextSize(SMALL);
 	int w = width('%');
-	tft.setCursor(tft.width() - w - 1, tft.height() - h);
+	tft.setCursor(tft.width() - w - SMALL, tft.height() - h);
 	tft.print('%');
 	tft.setTextSize(LARGE);
 	char hum[8];
 	snprintf(hum, sizeof(hum), "%d", humidity);
-	tft.setCursor(tft.width() - tft.textWidth(hum) - w - 1, tft.height() - h);
+	tft.setCursor(tft.width() - tft.textWidth(hum) - w - SMALL, tft.height() - h);
 	tft.print(hum);
 }
 
@@ -241,7 +241,7 @@ void display_weather(struct Conditions &c) {
 	tft.setTextSize(LARGE);
 	char pres[8];
 	snprintf(pres, sizeof(pres), "%d", c.pressure);
-	tft.setCursor(tft.width() - tft.textWidth(pres) - uw - 1, 1);
+	tft.setCursor(tft.width() - tft.textWidth(pres) - uw - SMALL, 1);
 	tft.print(c.pressure);
 	tft.setTextSize(SMALL);
 	tft.print(unit);
@@ -252,7 +252,7 @@ void display_weather(struct Conditions &c) {
 		trend = "falling";
 	}
 	if (trend) {
-		tft.setCursor(tft.width() - tft.textWidth(trend), tft.fontHeight()+1);
+		tft.setCursor(tft.width() - tft.textWidth(trend) - SMALL, tft.fontHeight()+1);
 		tft.print(trend);
 	}
 
@@ -277,7 +277,7 @@ void display_astronomy(struct Conditions &c) {
 	tft.setCursor(1, 1);
 	tft.print(F("sun"));
 	const char *moon = "moon";
-	tft.setCursor(tft.width() - tft.textWidth(moon), 1);
+	tft.setCursor(tft.width() - tft.textWidth(moon) - LARGE, 1);
 	tft.print(moon);
 	tft.setTextSize(SMALL);
 	tft.setCursor(c.sunrise_hour < 10? 1+width(c.sunrise_hour): 1, 1+h);
@@ -302,10 +302,10 @@ void display_astronomy(struct Conditions &c) {
 	if (rl > 0) {
 		char buf[16];
 		snprintf(buf, sizeof(buf), "%s:%s", c.moonrise_hour, c.moonrise_minute);
-		tft.setCursor(tft.width() - tft.textWidth(buf), 1+h);
+		tft.setCursor(tft.width() - tft.textWidth(buf) - SMALL, 1+h);
 		tft.print(buf);
 		snprintf(buf, sizeof(buf), "%s:%s", c.moonset_hour, c.moonset_minute);
-		tft.setCursor(tft.width() - tft.textWidth(buf), 1+h+tft.fontHeight());
+		tft.setCursor(tft.width() - tft.textWidth(buf) - SMALL, 1+h+tft.fontHeight());
 		tft.print(buf);
 	}
 
@@ -331,7 +331,7 @@ void display_forecast(struct Forecast &f) {
 	tft.setTextSize(LARGE);
 	char day[4];
 	strftime(day, sizeof(day), "%a", localtime(&f.epoch));
-	tft.setCursor(tft.width() - tft.textWidth(day), 1);
+	tft.setCursor(tft.width() - tft.textWidth(day) - LARGE, 1);
 	tft.print(day);
 
 	tft.setTextSize(SMALL);
