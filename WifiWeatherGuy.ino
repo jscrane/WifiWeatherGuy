@@ -83,7 +83,7 @@ void config::configure(JsonDocument &o) {
 }
 
 Switch swtch(500);
-void ICACHE_RAM_ATTR swtch_handler() { swtch.on(); }
+void IRAM_ATTR swtch_handler() { swtch.on(); }
 
 const char *config_file = "/config.json";
 static int screen = 0;
