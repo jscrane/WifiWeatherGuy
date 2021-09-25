@@ -7,3 +7,4 @@ littlefs.img
 *.swp
 eagle/WifiWeatherGuy.pro
 eagle/WifiWeatherGuy.b#?
+data/*/config.json

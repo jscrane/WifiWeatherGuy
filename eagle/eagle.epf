@@ -351,7 +351,7 @@ UsedLibrary="/home/steve/src/Sick_of_Beige/Eagle_library/dp_pcb.lbr"
 [Win_1]
 Type="Schematic Editor"
 Loc="386 141 985 540"
-State=3
+State=1
 Number=1
 File="/home/steve/src/TinySensors/eagle/sensors.sch"
 View="-6.14578 28.1306 150.536 119.483"
@@ -393,6 +393,7 @@ ArcDirection=0
 AddLevel=2
 PadsSameType=0
 Layer=91
+Views=" 1: -6.14578 28.1306 150.536 119.483"
 Sheet="1"
 
 [Win_2]

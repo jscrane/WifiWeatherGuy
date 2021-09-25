@@ -28,4 +28,9 @@ CPPFLAGS += $(XCPPFLAGS) -DPROVIDER=OpenWeatherMap
 FS_DIR := data/owm
 endif
 
+PREBUILD := data/$t/config.json
+
+data/%/config.json: config.skel
+	cp $^ $@
+
 include esp8266.mk
