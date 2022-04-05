@@ -90,7 +90,8 @@ bool OpenWeatherMap::update_conditions(JsonDocument &root, struct Conditions &c)
 	return true;
 }
 
-const unsigned cbytes = JSON_ARRAY_SIZE(3) + 2*JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + 3*JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(12) + 976;
+//const unsigned cbytes = JSON_ARRAY_SIZE(3) + 2*JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + 3*JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(12) + 976;
+const unsigned cbytes = 24576;
 
 bool OpenWeatherMap::fetch_conditions(struct Conditions &conditions) {
 	WiFiClient client;
@@ -138,7 +139,8 @@ static void update_forecasts(JsonDocument &root, struct Forecast fs[], int n) {
 	}
 }
 
-const unsigned fbytes = 16*JSON_ARRAY_SIZE(1) + JSON_ARRAY_SIZE(16) + 2*JSON_OBJECT_SIZE(0) + 46*JSON_OBJECT_SIZE(1) + 17*JSON_OBJECT_SIZE(2) + 17*JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + 32*JSON_OBJECT_SIZE(8) + 12603;
+// const unsigned fbytes = 16*JSON_ARRAY_SIZE(1) + JSON_ARRAY_SIZE(16) + 2*JSON_OBJECT_SIZE(0) + 46*JSON_OBJECT_SIZE(1) + 17*JSON_OBJECT_SIZE(2) + 17*JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + 32*JSON_OBJECT_SIZE(8) + 12603;
+const unsigned fbytes = cbytes;
 
 bool OpenWeatherMap::fetch_forecasts(struct Forecast forecasts[], int days) {
 	WiFiClient client;
