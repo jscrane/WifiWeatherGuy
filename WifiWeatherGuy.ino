@@ -90,22 +90,24 @@ static int screen = 0;
 static SimpleTimer timers;
 
 static void update_display() {
-	switch (screen) {
-	case 0:
-		display_weather(conditions);
-		break;
-	case 1:
-		display_astronomy(conditions);
-		break;
-	case 2:
-	case 3:
-	case 4:
-	case 5:
-		display_forecast(forecasts[screen - 2]);
-		break;
-	case 6:
-		display_about(stats);
-		break;
+	if (cfg.dimmable || fade > cfg.dim) {
+		switch (screen) {
+		case 0:
+			display_weather(conditions);
+			break;
+		case 1:
+			display_astronomy(conditions);
+			break;
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			display_forecast(forecasts[screen - 2]);
+			break;
+		case 6:
+			display_about(stats);
+			break;
+		}
 	}
 }
 
