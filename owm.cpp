@@ -11,7 +11,6 @@
 #include "dbg.h"
 
 const char host[] = "api.openweathermap.org";
-static bool forecast;
 
 void OpenWeatherMap::on_connect(WiFiClient &client, bool conds) {
 	client.print(F("/data/2.5/"));
@@ -146,7 +145,6 @@ bool OpenWeatherMap::fetch_forecasts(struct Forecast forecasts[], int days) {
 	WiFiClient client;
 	bool ret = false;
 
-	forecast = true;
 	if (connect_and_get(client, host, false)) {
 		DynamicJsonDocument doc(fbytes);
 		auto error = deserializeJson(doc, client);
@@ -160,7 +158,6 @@ bool OpenWeatherMap::fetch_forecasts(struct Forecast forecasts[], int days) {
 			ret = true;
 		}
 	}
-	forecast = false;
 	client.stop();
 	return ret;
 }

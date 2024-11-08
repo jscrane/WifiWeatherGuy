@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Configuration</title>
+<script src="/js/transparency.min.js"></script>
+<script>
+function load_config() {
+  fetch('/config').then(function(response) {
+    if (response.status !== 200) {
+      console.log('Error: '+response.status);
+      return;
+    }
+    response.json().then(function(data) {
+      Transparency.render(document.getElementById('config'), data);
+      chk_dimmable();
+      chk_nearest();
+    });
+  }).catch(function(err) {
+    console.log('Fetch error :-S', err);
+  });
+}
+function save_config() {
+  form = document.getElementById('config');
+  data = [].reduce.call(form.elements, (o, element) => {
+    if (element.id && element.value) {
+      if (element.type == 'checkbox') {
+        o[element.id] = (element.checked? 1: 0);
+      } else {
+        o[element.id] = element.value;
+      }
+    }
+    return o;
+  }, {});
+
+  data['summer'] = [].reduce.call(document.getElementsByClassName('smmr'), (o, element) => {
+    o[element.id] = element.value;
+    return o;
+  }, {});
+
+  data['winter'] = [].reduce.call(document.getElementsByClassName('wntr'), (o, element) => {
+    o[element.id] = element.value;
+    return o;
+  }, {});
+
+  xhr = new XMLHttpRequest();
+  xhr.open("POST", "/config", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.send(JSON.stringify(data));
+}
+function chk_dimmable() {
+  val = document.getElementById('dimmable').checked;
+  document.getElementById('bright').disabled = !val;
+  document.getElementById('dim').disabled = !val;
+}
+function chk_nearest() {
+  val = document.getElementById('nearest').checked;
+  document.getElementById('station').disabled = val;
+}
+</script>
+</head>
+<body onload="load_config()">
+
+<form id="config">
+<fieldset>
+<legend>Configuration</legend>
+<table>
+  <tr>
+    <td colspan="3" align="center" style="background-color:lightgray">Networking</td>
+  </tr>
+  <tr>
+    <td>SSID:</td>
+    <td><input type="text" id="ssid"></td>
+    <td><img src="info.png" title="Your Wifi network name"/></td>
+  </tr>
+  <tr>
+    <td>Password:</td>
+    <td><input type="text" id="password"></td>
+    <td><img src="info.png" title="Your Wifi network password"/></td>
+  </tr>
+  <tr>
+    <td>Hostname:</td>
+    <td><input type="text" id="hostname"></td>
+    <td><img src="info.png" title="My hostname on your network"/></td>
+  </tr>
+  <tr>
+    <td colspan="3" align="center" style="background-color:lightgray">Location</td>
+  </tr>
+  <tr>
+    <td>Nearest:</td>
+    <td><input type="checkbox" id="nearest" onclick="chk_nearest()"></td>
+    <td><img src="info.png" title="Whether to use the nearest Weather Station to your IP address"/></td>
+  </tr>
+  <tr>
+    <td>Station:</td>
+    <td><input type="text" id="station"></td>
+    <td><img src="info.png" title="City or Weather Station to use"/></td>
+  </tr>
+  <tr>
+    <td>Summer:</td>
+    <td>
+      <table id="summer">
+      <tr>
+	<td>
+          <select class="smmr" id="week">
+            <option value="0">Last</option>
+            <option value="1">First</option>
+            <option value="2">Second</option>
+            <option value="3">Third</option>
+            <option value="4">Fourth</option>
+	  </select>
+	</td>
+	<td>
+          <select class="smmr" id="dow">
+            <option value="1">Sun</option>
+            <option value="2">Mon</option>
+            <option value="3">Tue</option>
+            <option value="4">Wed</option>
+            <option value="5">Thu</option>
+            <option value="6">Fri</option>
+            <option value="7">Sat</option>
+	  </select>
+	</td>
+	<td>
+          <select class="smmr" id="month">
+            <option value="1">Jan</option>
+            <option value="2">Feb</option>
+            <option value="3">Mar</option>
+            <option value="4">Apr</option>
+            <option value="5">May</option>
+            <option value="6">Jun</option>
+            <option value="7">Jul</option>
+            <option value="8">Aug</option>
+            <option value="9">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
+	  </select>
+	</td>
+        <td><input type="number" min=0 max=23 class="smmr" id="hour"></td>
+        <td><input type="number" min=0 max=1560 step=15 class="smmr" id="offset"></td>
+      </tr>
+      </table>
+    </td>
+    <td><img src="info.png" title="Start of Summer time and its offset from UTC"/></td>
+  </tr>
+  <tr>
+    <td>Winter:</td>
+    <td>
+      <table id="winter">
+      <tr>
+	<td>
+          <select class="wntr" id="week">
+            <option value="0">Last</option>
+            <option value="1">First</option>
+            <option value="2">Second</option>
+            <option value="3">Third</option>
+            <option value="4">Fourth</option>
+	  </select>
+	</td>
+	<td>
+          <select class="wntr" id="dow">
+            <option value="1">Sun</option>
+            <option value="2">Mon</option>
+            <option value="3">Tue</option>
+            <option value="4">Wed</option>
+            <option value="5">Thu</option>
+            <option value="6">Fri</option>
+            <option value="7">Sat</option>
+	  </select>
+	</td>
+	<td>
+          <select class="wntr" id="month">
+            <option value="1">Jan</option>
+            <option value="2">Feb</option>
+            <option value="3">Mar</option>
+            <option value="4">Apr</option>
+            <option value="5">May</option>
+            <option value="6">Jun</option>
+            <option value="7">Jul</option>
+            <option value="8">Aug</option>
+            <option value="9">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
+	  </select>
+	</td>
+        <td><input type="number" min=0 max=23 class="wntr" id="hour"></td>
+        <td><input type="number" min=0 max=1560 step=15 class="wntr" id="offset"></td>
+      </tr>
+      </table>
+    </td>
+    <td><img src="info.png" title="Start of Winter time and its offset from UTC"/></td>
+  </tr>
+  <tr>
+    <td colspan="3" align="center" style="background-color:lightgray">Display</td>
+  </tr>
+  <tr>
+    <td>Metric:</td>
+    <td><input type="checkbox" id="metric"></td>
+    <td><img src="info.png" title="Use Metric (or Imperial) units"/></td>
+  </tr>
+  <tr>
+    <td>Update Conditions:</td>
+    <td><input type="number" min=0 id="conditions_interval"></td>
+    <td><img src="info.png" title="Update interval for current conditions"/></td>
+  </tr>
+  <tr>
+    <td>Update Forecasts:</td>
+    <td><input type="number" min=0 id="forecasts_interval"></td>
+    <td><img src="info.png" title="Update interval for forecasts"/></td>
+  </tr>
+  <tr>
+    <td>Display On:</td>
+    <td><input type="number" min=0 id="display"></td>
+    <td><img src="info.png" title="Seconds display stays on after button press"/></td>
+  </tr>
+  <tr>
+    <td>Dimmable:</td>
+    <td><input type="checkbox" id="dimmable" onclick="chk_dimmable()"></td>
+    <td><img src="info.png" title="Whether display is dimmable by PWM"/></td>
+  </tr>
+  <tr>
+    <td>Brightness:</td>
+    <td><input type="number" min="0" max="1023" id="bright"></td>
+    <td><img src="info.png" title="Brightness of display when on"/></td>
+  </tr>
+  <tr>
+    <td>Dim:</td>
+    <td><input type="number" min="0" max="1023" id="dim"></td>
+    <td><img src="info.png" title="Dimness of display when off"/></td>
+  </tr>
+  <tr>
+    <td>Rotate:</td>
+    <td><input type="number" min="0" max="3" id="rotate"></td>
+    <td><img src="info.png" title="Display rotation (0-3)"/></td>
+  </tr>
+  <tr>
+    <td colspan="3" align="center" style="background-color:lightgray">
+      <button type="submit" onclick="save_config()">Update</button>
+    </td>
+  </tr>
+</table>
+</fieldset>
+</form>
+
+<form action="/update" enctype="multipart/form-data" method="post">
+<fieldset>
+<legend>Firmware Upgrade</legend>
+<table>
+  <tr>
+    <td>Image File:</td>
+    <td><input name="image" type="file" accept=".ino.bin"/></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" style="background-color:lightgray">
+      <input type="submit" value="Upgrade"/>
+    </td>
+  </tr>
+</table>
+</fieldset>
+</form>
+</body>
+</html>

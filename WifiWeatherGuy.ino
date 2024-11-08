@@ -287,6 +287,7 @@ void setup() {
 						// if success, decode...
 						cfg.lat = geo["lat"];
 						cfg.lon = geo["lon"];
+						strncpy(conditions.city, geo["city"], sizeof(conditions.city));
 						is_geo = true;
 					}
 				}
