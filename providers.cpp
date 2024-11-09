@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
-#include <StreamUtils.h>
 
 #include "providers.h"
 #include "state.h"
@@ -45,9 +44,7 @@ bool Provider::fetch_conditions(struct Conditions &conditions) {
 
 	if (connect_and_get(client, true)) {
 		JsonDocument doc;
-		ReadLoggingStream logger(client, Serial);
-		//DeserializationError error = deserializeJson(doc, client);
-		DeserializationError error = deserializeJson(doc, logger);
+		DeserializationError error = deserializeJson(doc, client);
 		if (error) {
 			ERR(print(F("Deserialization of Conditions failed: ")));
 			ERR(println(error.f_str()));
@@ -68,9 +65,7 @@ bool Provider::fetch_forecasts(struct Forecast forecasts[], int days) {
 
 	if (connect_and_get(client, false)) {
 		JsonDocument doc;
-		ReadLoggingStream logger(client, Serial);
-		//DeserializationError error = deserializeJson(doc, client);
-		DeserializationError error = deserializeJson(doc, logger);
+		DeserializationError error = deserializeJson(doc, client);
 		if (error) {
 			ERR(print(F("Deserialization of Forecasts failed: ")));
 			ERR(println(error.f_str()));
