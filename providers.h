@@ -24,16 +24,6 @@ private:
 	const __FlashStringHelper *_host;
 };
 
-class Wunderground: public Provider {
-public:
-	Wunderground();
-
-protected:
-	void on_connect(Stream &c, bool conds);
-	bool update_conditions(class JsonDocument &doc, struct Conditions &c);
-	bool update_forecasts(class JsonDocument &doc, struct Forecast f[], int days);
-};
-
 class OpenWeatherMap: public Provider {
 public:
 	OpenWeatherMap();

@@ -18,11 +18,6 @@ endif
 
 t ?= openmeteo
 
-ifeq ($t,wunderground)
-CPPFLAGS += -DPROVIDER=Wunderground
-FS_DIR := data/wunderground
-endif
-
 ifeq ($t,owm)
 CPPFLAGS += -DPROVIDER=OpenWeatherMap
 FS_DIR := data/owm
