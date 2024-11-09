@@ -10,7 +10,9 @@
 #include "dbg.h"
 #include "state.h"
 
+#if !defined(ICON_W)
 #define ICON_W		50
+#endif
 #define ICON_H		ICON_W
 
 #define SMALL	1
