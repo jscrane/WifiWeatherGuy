@@ -34,12 +34,12 @@ void OpenMeteo::on_connect(Stream &client, bool is_fetch_conditions) {
 
 bool OpenMeteo::update_conditions(JsonDocument &doc, struct Conditions &c) {
 
-	int utc_offset_seconds = doc["utc_offset_seconds"]; // 0
-	const char* timezone = doc["timezone"]; // "Europe/Dublin"
-	const char* timezone_abbreviation = doc["timezone_abbreviation"]; // "GMT"
+	int utc_offset_seconds = doc[F("utc_offset_seconds")]; // 0
+	const char* timezone = doc[F("timezone")]; // "Europe/Dublin"
+	const char* timezone_abbreviation = doc[F("timezone_abbreviation")]; // "GMT"
 	
-	const JsonObject &current = doc["current"];
-	long current_time = current["time"]; // 1730971800
+	const JsonObject &current = doc[F("current")];
+	long current_time = current[F("time")]; // 1730971800
 	time_t epoch = tz->toLocal((time_t)current_time);
 	if (epoch <= c.epoch)
 		return false;
@@ -50,39 +50,39 @@ bool OpenMeteo::update_conditions(JsonDocument &doc, struct Conditions &c) {
 	c.age_of_moon = moon_age(epoch);
 	strncpy_P(c.moon_phase, moon_phase(c.age_of_moon), sizeof(c.moon_phase));
 
-	int current_interval = current["interval"]; // 900
-	float current_temperature_2m = current["temperature_2m"]; // 13.6
+	int current_interval = current[F("interval")]; // 900
+	float current_temperature_2m = current[F("temperature_2m")]; // 13.6
 	c.temp = (int)(0.5 + current_temperature_2m);
 
-	float current_apparent_temperature = current["apparent_temperature"]; // 12.1
+	float current_apparent_temperature = current[F("apparent_temperature")]; // 12.1
 	c.feelslike = (int)(0.5 + current_apparent_temperature);
 
-	int current_relative_humidity_2m = current["relative_humidity_2m"]; // 88
+	int current_relative_humidity_2m = current[F("relative_humidity_2m")]; // 88
 	c.humidity = current_relative_humidity_2m;
 
-	int current_is_day = current["is_day"]; // 1
-	int current_weather_code = current["weather_code"]; // 3
+	int current_is_day = current[F("is_day")]; // 1
+	int current_weather_code = current[F("weather_code")]; // 3
 	strncpy_P(c.weather, weather_description(current_weather_code), sizeof(c.weather));
 	snprintf(c.icon, sizeof(c.icon), "%d%c", current_weather_code, current_is_day? 'd': 'n');
 
-	int current_surface_pressure = current["surface_pressure"]; // 1022
+	int current_surface_pressure = current[F("surface_pressure")]; // 1022
 	c.pressure = current_surface_pressure;
 
-	int current_wind_speed_10m = current["wind_speed_10m"]; // 14
+	int current_wind_speed_10m = current[F("wind_speed_10m")]; // 14
 	c.wind = current_wind_speed_10m;
 
-	int current_wind_direction_10m = current["wind_direction_10m"]; // 134
+	int current_wind_direction_10m = current[F("wind_direction_10m")]; // 134
 	c.wind_degrees = current_wind_direction_10m;
 	
-	const JsonObject &daily = doc["daily"];
-	long daily_time_0 = daily["time"][0]; // 1730937600
-	long daily_sunrise_0 = daily["sunrise"][0]; // 1730964978
+	const JsonObject &daily = doc[F("daily")];
+	long daily_time_0 = daily[F("time")][0]; // 1730937600
+	long daily_sunrise_0 = daily[F("sunrise")][0]; // 1730964978
 	time_t sunrise = tz->toLocal(daily_sunrise_0);
 	struct tm *sr = gmtime(&sunrise);
 	c.sunrise_hour = sr->tm_hour;
 	c.sunrise_minute = sr->tm_min;
 
-	long daily_sunset_0 = daily["sunset"][0]; // 1730997677
+	long daily_sunset_0 = daily[F("sunset")][0]; // 1730997677
 	time_t sunset = tz->toLocal((time_t)daily_sunset_0);
 	struct tm *ss = gmtime(&sunset);
 	c.sunset_hour = ss->tm_hour;
@@ -93,25 +93,25 @@ bool OpenMeteo::update_conditions(JsonDocument &doc, struct Conditions &c) {
 
 bool OpenMeteo::update_forecasts(JsonDocument &doc, struct Forecast forecasts[], int days) {
 
-	int utc_offset_seconds = doc["utc_offset_seconds"]; // 0
-	const char* timezone = doc["timezone"]; // "Europe/Dublin"
-	const char* timezone_abbreviation = doc["timezone_abbreviation"]; // "GMT"
+	int utc_offset_seconds = doc[F("utc_offset_seconds")]; // 0
+	const char* timezone = doc[F("timezone")]; // "Europe/Dublin"
+	const char* timezone_abbreviation = doc[F("timezone_abbreviation")]; // "GMT"
 	
-	JsonObject current = doc["current"];
-	long current_time = current["time"]; // 1730982600
+	JsonObject current = doc[F("current")];
+	long current_time = current[F("time")]; // 1730982600
 	
-	JsonObject daily = doc["daily"];
-	JsonArray daily_time = daily["time"];
-	JsonArray daily_weather_code = daily["weather_code"];
-	JsonArray daily_temperature_2m_max = daily["temperature_2m_max"];
-	JsonArray daily_temperature_2m_min = daily["temperature_2m_min"];
-	JsonArray daily_apparent_temperature_max = daily["apparent_temperature_max"];
-	JsonArray daily_apparent_temperature_min = daily["apparent_temperature_min"];
-	JsonArray daily_sunrise = daily["sunrise"];
-	JsonArray daily_sunset = daily["sunset"];
-	JsonArray daily_wind_speed_10m_max = daily["wind_speed_10m_max"];
-	JsonArray daily_wind_gusts_10m_max = daily["wind_gusts_10m_max"];
-	JsonArray daily_wind_direction_10m_dominant = daily["wind_direction_10m_dominant"];
+	JsonObject daily = doc[F("daily")];
+	JsonArray daily_time = daily[F("time")];
+	JsonArray daily_weather_code = daily[F("weather_code")];
+	JsonArray daily_temperature_2m_max = daily[F("temperature_2m_max")];
+	JsonArray daily_temperature_2m_min = daily[F("temperature_2m_min")];
+	JsonArray daily_apparent_temperature_max = daily[F("apparent_temperature_max")];
+	JsonArray daily_apparent_temperature_min = daily[F("apparent_temperature_min")];
+	JsonArray daily_sunrise = daily[F("sunrise")];
+	JsonArray daily_sunset = daily[F("sunset")];
+	JsonArray daily_wind_speed_10m_max = daily[F("wind_speed_10m_max")];
+	JsonArray daily_wind_gusts_10m_max = daily[F("wind_gusts_10m_max")];
+	JsonArray daily_wind_direction_10m_dominant = daily[F("wind_direction_10m_dominant")];
 	for (int i = 0; i < days; i++) {
 		struct Forecast &f = forecasts[i];
 
