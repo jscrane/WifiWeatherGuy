@@ -9,9 +9,9 @@
 #include "state.h"
 #include "providers.h"
 
-const char host[] PROGMEM = "api.open-meteo.com";
+OpenMeteo::OpenMeteo(): Provider(4096, 4096, F("api.open-meteo.com")) {}
 
-void OpenMeteo::on_connect(WiFiClient &client, bool is_fetch_conditions) {
+void OpenMeteo::on_connect(Stream &client, bool is_fetch_conditions) {
 
 	client.print(F("/v1/forecast"));
 	client.print(F("?latitude="));
@@ -63,7 +63,7 @@ bool OpenMeteo::update_conditions(JsonDocument &doc, struct Conditions &c) {
 	int current_is_day = current["is_day"]; // 1
 	int current_weather_code = current["weather_code"]; // 3
 	strncpy_P(c.weather, weather_description(current_weather_code), sizeof(c.weather));
-	snprintf(c.icon, sizeof(c.icon), "%d%c.bmp", current_weather_code, current_is_day);
+	snprintf(c.icon, sizeof(c.icon), "%d%c", current_weather_code, current_is_day? 'd': 'n');
 
 	int current_surface_pressure = current["surface_pressure"]; // 1022
 	c.pressure = current_surface_pressure;
@@ -91,32 +91,7 @@ bool OpenMeteo::update_conditions(JsonDocument &doc, struct Conditions &c) {
 	return true;
 }
 
-// ArduinoJson assistant said 2048 so...
-const unsigned cbytes = 4096;
-
-bool OpenMeteo::fetch_conditions(struct Conditions &conditions) {
-
-	WiFiClient client;
-	bool ret = false;
-
-	if (connect_and_get(client, host, true)) {
-		DynamicJsonDocument doc(cbytes);
-		DeserializationError error = deserializeJson(doc, client);
-		if (error) {
-			ERR(print(F("Deserialization failed: ")));
-			ERR(println(error.f_str()));
-			stats.parse_failures++;
-		} else {
-			ret = update_conditions(doc, conditions);
-			DBG(print(F("Done ")));
-			DBG(println(doc.memoryUsage()));
-		}
-	}
-	client.stop();
-	return ret;
-}
-
-static void update_forecasts(JsonDocument &doc, struct Forecast forecasts[], int days) {
+bool OpenMeteo::update_forecasts(JsonDocument &doc, struct Forecast forecasts[], int days) {
 
 	int utc_offset_seconds = doc["utc_offset_seconds"]; // 0
 	const char* timezone = doc["timezone"]; // "Europe/Dublin"
@@ -144,7 +119,7 @@ static void update_forecasts(JsonDocument &doc, struct Forecast forecasts[], int
 		f.epoch = tz->toLocal((time_t)daily_time_i);
 
 		int daily_weather_code_i = daily_weather_code[i]; // 3
-		strncpy_P(f.conditions, weather_description(daily_weather_code), sizeof(c.weather));
+		strncpy_P(f.conditions, weather_description(daily_weather_code), sizeof(f.conditions));
 		// FIXME: icon
 
 		float daily_temperature_2m_max_i = daily_temperature_2m_max[i]; // 14.2
@@ -162,35 +137,10 @@ static void update_forecasts(JsonDocument &doc, struct Forecast forecasts[], int
 		f.ave_wind = (int)(0.5 + daily_wind_speed_10m_max_i);
 
 		float daily_wind_gusts_10m_max_i = daily_wind_gusts_10m_max[i]; // 34.9
-		f.max_wind = (int)(0.5 + daily_wind_speed_10m_gusts_i);
+		f.max_wind = (int)(0.5 + daily_wind_gusts_10m_max_i);
 
 		int daily_wind_direction_10m_dominant_i = daily_wind_direction_10m_dominant[i]; // 148
 		f.wind_degrees = daily_wind_direction_10m_dominant_i;
 	}
-}
-
-// ArduinoJson assistant said 3072 so...
-const unsigned fbytes = 4096;
-
-bool OpenMeteo::fetch_forecasts(struct Forecast forecasts[], int days) {
-
-	WiFiClient client;
-	bool ret = false;
-
-	if (connect_and_get(client, host, false)) {
-		DynamicJsonDocument doc(fbytes);
-		DeserializationError error = deserializeJson(doc, client);
-		if (error) {
-			ERR(print(F("Deserialization failed: ")));
-			ERR(println(error.f_str()));
-			stats.parse_failures++;
-		} else {
-			update_forecasts(doc, forecasts, days);
-			DBG(print(F("Done ")));
-			DBG(println(doc.memoryUsage()));
-			ret = true;
-		}
-	}
-	client.stop();
-	return ret;
+	return true;
 }

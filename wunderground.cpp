@@ -9,9 +9,15 @@
 #include "state.h"
 #include "providers.h"
 
-const char host[] PROGMEM = "api.wunderground.com";
+const unsigned cbytes = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) +
+			JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
 
-static bool update_conditions(JsonDocument &root, struct Conditions &c) {
+const unsigned fbytes = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) +
+			8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 6150;
+
+Wunderground::Wunderground(): Provider(cbytes, fbytes, F("api.wunderground.com")) {}
+
+bool Wunderground::update_conditions(JsonDocument &root, struct Conditions &c) {
 	const JsonObject &current_observation = root[F("current_observation")];
 	if (current_observation.isNull())
 		return false;
@@ -67,32 +73,35 @@ static bool update_conditions(JsonDocument &root, struct Conditions &c) {
 	return true;
 }
 
-static void update_forecasts(JsonDocument &root, struct Forecast fs[], int n) {
+bool Wunderground::update_forecasts(JsonDocument &root, struct Forecast fs[], int n) {
 	const JsonArray &days = root[F("forecast")][F("simpleforecast")][F("forecastday")];
-	if (!days.isNull())
-		for (int i = 0; i < days.size() && i < n; i++) {
-			const JsonObject &day = days[i];
-			struct Forecast &f = fs[i];
-			f.epoch = (time_t)atoi(day[F("date")][F("epoch")] | "0");
-			if (cfg.metric) {
-				f.temp_high = atoi(day[F("high")][F("celsius")] | "0");
-				f.temp_low = atoi(day[F("low")][F("celsius")] | "0");
-				f.max_wind = day[F("maxwind")][F("kph")];
-				f.ave_wind = day[F("avewind")][F("kph")];
-			} else {
-				f.temp_high = atoi(day[F("high")][F("fahrenheit")] | "0");
-				f.temp_low = atoi(day[F("low")][F("fahrenheit")] | "0");
-				f.max_wind = day[F("maxwind")][F("mph")];
-				f.ave_wind = day[F("avewind")][F("mph")];
-			}
-			f.humidity = day[F("avehumidity")];
-			f.wind_degrees = day[F("avewind")][F("degrees")];
-			strlcpy(f.conditions, day[F("conditions")] | "", sizeof(f.conditions));
-			strlcpy(f.icon, day[F("icon")] | "", sizeof(f.icon));
+	if (days.isNull())
+		return false;
+
+	for (int i = 0; i < days.size() && i < n; i++) {
+		const JsonObject &day = days[i];
+		struct Forecast &f = fs[i];
+		f.epoch = (time_t)atoi(day[F("date")][F("epoch")] | "0");
+		if (cfg.metric) {
+			f.temp_high = atoi(day[F("high")][F("celsius")] | "0");
+			f.temp_low = atoi(day[F("low")][F("celsius")] | "0");
+			f.max_wind = day[F("maxwind")][F("kph")];
+			f.ave_wind = day[F("avewind")][F("kph")];
+		} else {
+			f.temp_high = atoi(day[F("high")][F("fahrenheit")] | "0");
+			f.temp_low = atoi(day[F("low")][F("fahrenheit")] | "0");
+			f.max_wind = day[F("maxwind")][F("mph")];
+			f.ave_wind = day[F("avewind")][F("mph")];
 		}
+		f.humidity = day[F("avehumidity")];
+		f.wind_degrees = day[F("avewind")][F("degrees")];
+		strlcpy(f.conditions, day[F("conditions")] | "", sizeof(f.conditions));
+		strlcpy(f.icon, day[F("icon")] | "", sizeof(f.icon));
+	}
+	return true;
 }
 
-void Wunderground::on_connect(WiFiClient &client, bool conds) {
+void Wunderground::on_connect(Stream &client, bool conds) {
 	char loc[sizeof(cfg.station)];
 
 	client.print(F("/api/"));
@@ -110,69 +119,4 @@ void Wunderground::on_connect(WiFiClient &client, bool conds) {
 	client.print(F("/q/"));
 	client.print(loc);
 	client.print(F(".json"));
-}
-
-const unsigned cbytes = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) +
-			JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
-
-const unsigned fbytes = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) +
-			8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 6150;
-
-static bool has_memory(unsigned need) {
-	unsigned heap = ESP.getFreeHeap();
-	if (heap <= need) {
-		DBG(println(F("Insufficient memory to update!")));
-		stats.mem_failures++;
-		return false;
-	}
-	return true;
-
-}
-
-bool Wunderground::fetch_conditions(struct Conditions &conditions) {
-	if (!has_memory(cbytes))
-		return false;
-
-	bool ret = false;
-	WiFiClient client;
-	if (connect_and_get(client, host, true)) {
-		DynamicJsonDocument doc(cbytes);
-		auto error = deserializeJson(doc, client);
-		if (error) {
-			ERR(println(F("Failed to parse!")));
-			stats.parse_failures++;
-		} else {
-			update_conditions(doc, conditions);
-			DBG(print(F("Done ")));
-			DBG(println(doc.size()));
-			ret = true;
-		}
-	}
-
-	client.stop();
-	return ret;
-}
-
-bool Wunderground::fetch_forecasts(struct Forecast forecasts[], int days) {
-	if (!has_memory(fbytes))
-		return false;
-
-	bool ret = false;
-	WiFiClient client;
-	if (connect_and_get(client, host, false)) {
-		DynamicJsonDocument doc(fbytes);
-		auto error = deserializeJson(doc, client);
-		if (error) {
-			ERR(println(F("Failed to parse!")));
-			stats.parse_failures++;
-		} else {
-			update_forecasts(doc, forecasts, days);
-			DBG(print(F("Done ")));
-			DBG(println(doc.size()));
-			ret = true;
-		}
-	}
-
-	client.stop();
-	return ret;
 }

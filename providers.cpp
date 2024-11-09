@@ -1,32 +1,90 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
+#include <StreamUtils.h>
 
 #include "providers.h"
 #include "state.h"
 #include "dbg.h"
 
-bool Provider::connect_and_get(WiFiClient &client, const char *host, bool conds) {
-	if (client.connect(host, 80)) {
+bool Provider::connect_and_get(WiFiClient &client, bool conds) {
+	if (client.connect(_host, 80)) {
+
 		client.print(F("GET "));
 
 		on_connect(client, conds);
 
 		client.print(F(" HTTP/1.1\r\nHost: "));
-		client.print(host);
-		client.print(F("\r\nConnection: close\r\n\r\n"));
+		client.print(_host);
+		client.print(F("\r\nConnection: close\r\nAccept: application/json\r\n\r\n"));
 		if (client.connected()) {
 			unsigned long now = millis();
 			while (!client.available())
-				if (millis() - now > 5000)
+				if (millis() - now > 5000) {
+					ERR(println(F("Timeout waiting for server!")));
 					return false;
-			client.find("\r\n\r\n");
-			return true;
+				}
+			while (client.available()) {
+				int c = client.peek();
+				if (c == '{' || c == '[')
+					return true;;
+				client.read();
+			}
+			ERR(println(F("Unexpected EOF reading server response!")));
+			return false;
 		}
 	}
 	ERR(println(F("Failed to connect!")));
 	stats.connect_failures++;
 	return false;
+}
+
+bool Provider::fetch_conditions(struct Conditions &conditions) {
+	WiFiClient client;
+	bool ret = false;
+
+	if (connect_and_get(client, true)) {
+		DynamicJsonDocument doc(_cbytes);
+		ReadLoggingStream logger(client, Serial);
+		//DeserializationError error = deserializeJson(doc, client);
+		DeserializationError error = deserializeJson(doc, logger);
+		if (error) {
+			ERR(print(F("Deserialization of Conditions failed: ")));
+			ERR(println(error.f_str()));
+			stats.parse_failures++;
+		} else {
+			ret = update_conditions(doc, conditions);
+			DBG(print(F("Done ")));
+			DBG(println(doc.memoryUsage()));
+		}
+	}
+	client.stop();
+	return ret;
+}
+
+bool Provider::fetch_forecasts(struct Forecast forecasts[], int days) {
+
+	WiFiClient client;
+	bool ret = false;
+
+	if (connect_and_get(client, false)) {
+		DynamicJsonDocument doc(_fbytes);
+		ReadLoggingStream logger(client, Serial);
+		//DeserializationError error = deserializeJson(doc, client);
+		DeserializationError error = deserializeJson(doc, logger);
+		if (error) {
+			ERR(print(F("Deserialization of Forecasts failed: ")));
+			ERR(println(error.f_str()));
+			stats.parse_failures++;
+		} else {
+			update_forecasts(doc, forecasts, days);
+			DBG(print(F("Done ")));
+			DBG(println(doc.memoryUsage()));
+			ret = true;
+		}
+	}
+	client.stop();
+	return ret;
 }
 
 // https://en.wikipedia.org/wiki/Lunar_phase#Calculating_phase
