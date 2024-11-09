@@ -172,7 +172,7 @@ void setup() {
 
 	tft.fillScreen(TFT_BLACK);
 	tft.setRotation(cfg.rotate);
-	tft.println(F("Weather Guy (c)2018"));
+	tft.println(F("Weather Guy (c)2018-24"));
 	tft.print(F("ssid: "));
 	tft.println(cfg.ssid);
 	tft.print(F("password: "));
@@ -280,8 +280,7 @@ void setup() {
 							goto cont;
 					client.find("\r\n\r\n");
 
-					const size_t size = JSON_OBJECT_SIZE(14) + 290;
-					DynamicJsonDocument geo(size);
+					JsonDocument geo;
 					auto error = deserializeJson(geo, client);
 					if (!error) {
 						// if success, decode...

@@ -12,7 +12,7 @@ bool Configuration::read_file(const char *filename) {
 		return false;
 	}
 
-	DynamicJsonDocument doc(2*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(15) + 700);
+	JsonDocument doc;
 	auto error = deserializeJson(doc, f);
 	f.close();
 	if (error) {
@@ -20,8 +20,6 @@ bool Configuration::read_file(const char *filename) {
 		return false;
 	}
 
-	DBG(print(F("config size: ")));
-	DBG(println(doc.memoryUsage()));
 	JsonObject root = doc.as<JsonObject>();
 	configure(doc);
 	return true;

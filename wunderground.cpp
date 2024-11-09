@@ -9,13 +9,7 @@
 #include "state.h"
 #include "providers.h"
 
-const unsigned cbytes = JSON_OBJECT_SIZE(0) + 9 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) +
-			JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(56) + 2530;
-
-const unsigned fbytes = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(8) + 2*JSON_OBJECT_SIZE(1) + 35*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) +
-			8*JSON_OBJECT_SIZE(4) + 8*JSON_OBJECT_SIZE(7) + 4*JSON_OBJECT_SIZE(17) + 4*JSON_OBJECT_SIZE(20) + 6150;
-
-Wunderground::Wunderground(): Provider(cbytes, fbytes, F("api.wunderground.com")) {}
+Wunderground::Wunderground(): Provider(F("api.wunderground.com")) {}
 
 bool Wunderground::update_conditions(JsonDocument &root, struct Conditions &c) {
 	const JsonObject &current_observation = root[F("current_observation")];

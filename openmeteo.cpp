@@ -9,7 +9,7 @@
 #include "state.h"
 #include "providers.h"
 
-OpenMeteo::OpenMeteo(): Provider(4096, 4096, F("api.open-meteo.com")) {}
+OpenMeteo::OpenMeteo(): Provider(F("api.open-meteo.com")) {}
 
 void OpenMeteo::on_connect(Stream &client, bool is_fetch_conditions) {
 

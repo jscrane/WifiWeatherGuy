@@ -10,9 +10,7 @@
 #include "providers.h"
 #include "dbg.h"
 
-const unsigned cbytes = 24576;
-
-OpenWeatherMap::OpenWeatherMap(): Provider(cbytes, cbytes, F("api.openweathermap.org")) {}
+OpenWeatherMap::OpenWeatherMap(): Provider(F("api.openweathermap.org")) {}
 
 void OpenWeatherMap::on_connect(Stream &client, bool conds) {
 	client.print(F("/data/2.5/"));

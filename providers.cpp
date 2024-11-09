@@ -44,7 +44,7 @@ bool Provider::fetch_conditions(struct Conditions &conditions) {
 	bool ret = false;
 
 	if (connect_and_get(client, true)) {
-		DynamicJsonDocument doc(_cbytes);
+		JsonDocument doc;
 		ReadLoggingStream logger(client, Serial);
 		//DeserializationError error = deserializeJson(doc, client);
 		DeserializationError error = deserializeJson(doc, logger);
@@ -55,7 +55,6 @@ bool Provider::fetch_conditions(struct Conditions &conditions) {
 		} else {
 			ret = update_conditions(doc, conditions);
 			DBG(print(F("Done ")));
-			DBG(println(doc.memoryUsage()));
 		}
 	}
 	client.stop();
@@ -68,7 +67,7 @@ bool Provider::fetch_forecasts(struct Forecast forecasts[], int days) {
 	bool ret = false;
 
 	if (connect_and_get(client, false)) {
-		DynamicJsonDocument doc(_fbytes);
+		JsonDocument doc;
 		ReadLoggingStream logger(client, Serial);
 		//DeserializationError error = deserializeJson(doc, client);
 		DeserializationError error = deserializeJson(doc, logger);
@@ -79,7 +78,6 @@ bool Provider::fetch_forecasts(struct Forecast forecasts[], int days) {
 		} else {
 			update_forecasts(doc, forecasts, days);
 			DBG(print(F("Done ")));
-			DBG(println(doc.memoryUsage()));
 			ret = true;
 		}
 	}

@@ -7,7 +7,7 @@ public:
 	bool fetch_forecasts(struct Forecast f[], int days);
 
 protected:
-	Provider(unsigned cbytes, unsigned fbytes, const __FlashStringHelper *host): _cbytes(cbytes), _fbytes(fbytes), _host(host) {}
+	Provider(const __FlashStringHelper *host): _host(host) {}
 
 	virtual void on_connect(Stream &c, bool conds) = 0;
 	virtual bool update_conditions(class JsonDocument &doc, struct Conditions &c) = 0;
@@ -21,7 +21,6 @@ protected:
 private:
 	bool connect_and_get(WiFiClient &c, bool conds);
 
-	unsigned _cbytes, _fbytes;
 	const __FlashStringHelper *_host;
 };
 
