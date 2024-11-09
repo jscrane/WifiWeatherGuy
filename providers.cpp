@@ -51,6 +51,8 @@ bool Provider::fetch_conditions(struct Conditions &conditions) {
 			stats.parse_failures++;
 		} else {
 			ret = update_conditions(doc, conditions);
+			if (ret)
+				stats.num_updates++;
 			DBG(print(F("Done ")));
 		}
 	}
@@ -71,9 +73,8 @@ bool Provider::fetch_forecasts(struct Forecast forecasts[], int days) {
 			ERR(println(error.f_str()));
 			stats.parse_failures++;
 		} else {
-			update_forecasts(doc, forecasts, days);
+			ret = update_forecasts(doc, forecasts, days);
 			DBG(print(F("Done ")));
-			ret = true;
 		}
 	}
 	client.stop();

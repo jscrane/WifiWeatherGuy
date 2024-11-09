@@ -328,7 +328,8 @@ void display_forecast(struct Forecast &f) {
 
 	display_wind_speed(f.ave_wind, f.wind_degrees, cfg.metric);
 	display_temperature(f.temp_high, f.temp_low, cfg.metric);
-	display_humidity(f.humidity);
+	if (f.humidity >= 0)
+		display_humidity(f.humidity);
 
 	tft.setTextSize(LARGE);
 	char day[4];

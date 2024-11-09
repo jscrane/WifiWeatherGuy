@@ -44,8 +44,8 @@ bool OpenMeteo::update_conditions(JsonDocument &doc, struct Conditions &c) {
 	if (epoch <= c.epoch)
 		return false;
 
-	stats.num_updates++;
-	stats.update(epoch - c.epoch);
+	if (c.epoch)
+		stats.update(epoch - c.epoch);
 	c.epoch = epoch;
 	c.age_of_moon = moon_age(epoch);
 	strncpy_P(c.moon_phase, moon_phase(c.age_of_moon), sizeof(c.moon_phase));
@@ -114,13 +114,14 @@ bool OpenMeteo::update_forecasts(JsonDocument &doc, struct Forecast forecasts[],
 	JsonArray daily_wind_direction_10m_dominant = daily[F("wind_direction_10m_dominant")];
 	for (int i = 0; i < days; i++) {
 		struct Forecast &f = forecasts[i];
+		f.humidity = -1;	// not available
 
 		long daily_time_i = daily_time[i]; // 1730937600
 		f.epoch = tz->toLocal((time_t)daily_time_i);
 
 		int daily_weather_code_i = daily_weather_code[i]; // 3
 		strncpy_P(f.conditions, weather_description(daily_weather_code), sizeof(f.conditions));
-		// FIXME: icon
+		snprintf(f.icon, sizeof(f.icon), "%dd", daily_weather_code);
 
 		float daily_temperature_2m_max_i = daily_temperature_2m_max[i]; // 14.2
 		f.temp_high = (int)(0.5 + daily_temperature_2m_max_i);

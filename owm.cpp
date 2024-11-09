@@ -47,7 +47,6 @@ bool OpenWeatherMap::update_conditions(JsonDocument &root, struct Conditions &c)
 	if (epoch <= c.epoch)
 		return false;
 
-	stats.num_updates++;
 	if (c.epoch)
 		stats.update(epoch - c.epoch);
 	c.epoch = epoch;
