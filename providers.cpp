@@ -120,7 +120,7 @@ const char *Provider::weather_description(int wmo_code) {
 	case 0:
 		return PSTR("clear sky");
 	case 1:
-		return PSTR("mainly clear");
+		return PSTR("mostly clear");
 	case 2:
 		return PSTR("partly cloudy");
 	case 3:
@@ -128,17 +128,17 @@ const char *Provider::weather_description(int wmo_code) {
 	case 45:
 		return PSTR("fog");
 	case 48:
-		return PSTR("freezing fog");
+		return PSTR("icy fog");
 	case 51:
 		return PSTR("light drizzle");
 	case 53:
 		return PSTR("drizzle");
 	case 55:
-		return PSTR("dense drizzle");
+		return PSTR("heavy drizzle");
 	case 56:
-		return PSTR("light freezing drizzle");
+		return PSTR("light icy drizzle");
 	case 57:
-		return PSTR("freezing drizzle");
+		return PSTR("icy drizzle");
 	case 61:
 		return PSTR("light rain");
 	case 63:
@@ -146,9 +146,9 @@ const char *Provider::weather_description(int wmo_code) {
 	case 65:
 		return PSTR("heavy rain");
 	case 66:
-		return PSTR("light freezing rain");
+		return PSTR("light icy rain");
 	case 67:
-		return PSTR("freezing rain");
+		return PSTR("icy rain");
 	case 71:
 		return PSTR("light snow");
 	case 73:
@@ -160,7 +160,7 @@ const char *Provider::weather_description(int wmo_code) {
 	case 80:
 		return PSTR("light showers");
 	case 81:
-		return PSTR("rain showers");
+		return PSTR("showers");
 	case 82:
 		return PSTR("heavy showers");
 	case 85:
