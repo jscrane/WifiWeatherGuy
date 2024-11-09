@@ -281,13 +281,16 @@ void setup() {
 					client.find("\r\n\r\n");
 
 					JsonDocument geo;
-					auto error = deserializeJson(geo, client);
+					DeserializationError error = deserializeJson(geo, client);
 					if (!error) {
 						// if success, decode...
 						cfg.lat = geo["lat"];
 						cfg.lon = geo["lon"];
 						strncpy(conditions.city, geo["city"], sizeof(conditions.city));
 						is_geo = true;
+					} else {
+						ERR(print(F("Deserializing ip-api.com response: ")));
+						ERR(println(error.f_str()));
 					}
 				}
 			}
