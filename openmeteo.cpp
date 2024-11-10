@@ -126,6 +126,7 @@ bool OpenMeteo::update_conditions(JsonDocument &doc, struct Conditions &c) {
 
 	int current_surface_pressure = current[F("surface_pressure")]; // 1022
 	c.pressure = current_surface_pressure;
+	c.pressure_trend = 0;
 
 	int current_wind_speed_10m = current[F("wind_speed_10m")]; // 14
 	c.wind = current_wind_speed_10m;
@@ -153,8 +154,8 @@ bool OpenMeteo::update_conditions(JsonDocument &doc, struct Conditions &c) {
 bool OpenMeteo::update_forecasts(JsonDocument &doc, struct Forecast forecasts[], int days) {
 
 	int utc_offset_seconds = doc[F("utc_offset_seconds")]; // 0
-	const char* timezone = doc[F("timezone")]; // "Europe/Dublin"
-	const char* timezone_abbreviation = doc[F("timezone_abbreviation")]; // "GMT"
+	const char *timezone = doc[F("timezone")]; // "Europe/Dublin"
+	const char *timezone_abbreviation = doc[F("timezone_abbreviation")]; // "GMT"
 	
 	JsonObject current = doc[F("current")];
 	long current_time = current[F("time")]; // 1730982600
