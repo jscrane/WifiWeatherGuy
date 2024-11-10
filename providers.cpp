@@ -36,7 +36,7 @@ bool Provider::fetch_conditions(struct Conditions &conditions) {
 
 	JsonClient client(_host);
 	bool ret = false;
-	auto lambda = [&](WiFiClient &c) { on_connect(c, true); };
+	auto lambda = [&](Stream &s) { on_connect(s, true); };
 
 	if (client.get(&lambda)) {
 		JsonDocument doc;
@@ -60,7 +60,7 @@ bool Provider::fetch_forecasts(struct Forecast forecasts[], int days) {
 
 	JsonClient client(_host);
 	bool ret = false;
-	auto lambda = [&](WiFiClient &c) { on_connect(c, false); };
+	auto lambda = [&](Stream &s) { on_connect(s, false); };
 
 	if (client.get(&lambda)) {
 		JsonDocument doc;

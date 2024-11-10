@@ -6,7 +6,7 @@ public:
 
 	bool get(const char *path) {
 
-		auto lambda = [path](WiFiClient &c) { c.print(path); };
+		auto lambda = [path](Stream &s) { s.print(path); };
 		return get(&lambda);
 	}
 
