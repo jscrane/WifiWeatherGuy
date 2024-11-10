@@ -94,12 +94,12 @@ void OpenMeteo::on_connect(Stream &client, bool is_fetch_conditions) {
 bool OpenMeteo::update_conditions(JsonDocument &doc, struct Conditions &c) {
 
 	int utc_offset_seconds = doc[F("utc_offset_seconds")]; // 0
-	const char* timezone = doc[F("timezone")]; // "Europe/Dublin"
-	const char* timezone_abbreviation = doc[F("timezone_abbreviation")]; // "GMT"
+	const char *timezone = doc[F("timezone")]; // "Europe/Dublin"
+	const char *timezone_abbreviation = doc[F("timezone_abbreviation")]; // "GMT"
 	
 	const JsonObject &current = doc[F("current")];
 	long current_time = current[F("time")]; // 1730971800
-	time_t epoch = tz->toLocal((time_t)current_time);
+	time_t epoch = (time_t)current_time;
 	if (epoch <= c.epoch)
 		return false;
 
@@ -136,13 +136,13 @@ bool OpenMeteo::update_conditions(JsonDocument &doc, struct Conditions &c) {
 	const JsonObject &daily = doc[F("daily")];
 	long daily_time_0 = daily[F("time")][0]; // 1730937600
 	long daily_sunrise_0 = daily[F("sunrise")][0]; // 1730964978
-	time_t sunrise = tz->toLocal(daily_sunrise_0);
+	time_t sunrise = (time_t)daily_sunrise_0;
 	struct tm *sr = gmtime(&sunrise);
 	c.sunrise_hour = sr->tm_hour;
 	c.sunrise_minute = sr->tm_min;
 
 	long daily_sunset_0 = daily[F("sunset")][0]; // 1730997677
-	time_t sunset = tz->toLocal((time_t)daily_sunset_0);
+	time_t sunset = (time_t)daily_sunset_0;
 	struct tm *ss = gmtime(&sunset);
 	c.sunset_hour = ss->tm_hour;
 	c.sunset_minute = ss->tm_min;
@@ -176,7 +176,7 @@ bool OpenMeteo::update_forecasts(JsonDocument &doc, struct Forecast forecasts[],
 		f.humidity = -1;	// not available
 
 		long daily_time_i = daily_time[i]; // 1730937600
-		f.epoch = tz->toLocal((time_t)daily_time_i);
+		f.epoch = (time_t)daily_time_i;
 
 		int daily_weather_code_i = daily_weather_code[i]; // 3
 		strncpy_P(f.conditions, weather_description(daily_weather_code), sizeof(f.conditions));
