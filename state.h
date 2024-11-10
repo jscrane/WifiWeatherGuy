@@ -3,8 +3,8 @@
 struct Conditions {
 	time_t epoch;
 	char city[48];
-	char icon[20];
-	char weather[16];
+	char icon[16];
+	char weather[32];
 	int temp, feelslike;
 	int humidity;
 	int wind, wind_degrees;
@@ -28,8 +28,8 @@ struct Forecast {
 	int ave_wind;
 	int wind_degrees;
 	int humidity;
-	char conditions[16];
-	char icon[20];
+	char conditions[32];
+	char icon[16];
 };
 
 struct Statistics {

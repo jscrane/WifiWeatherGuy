@@ -147,8 +147,10 @@ bool OpenMeteo::update_forecasts(JsonDocument &doc, struct Forecast forecasts[],
 		f.epoch = (time_t)daily_time_i;
 
 		int daily_weather_code_i = daily_weather_code[i];
-		strncpy_P(f.conditions, weather_description(daily_weather_code), sizeof(f.conditions));
-		snprintf(f.icon, sizeof(f.icon), "%dd", daily_weather_code);
+		strncpy_P(f.conditions, weather_description(daily_weather_code_i), sizeof(f.conditions));
+		snprintf(f.icon, sizeof(f.icon), "%dd", daily_weather_code_i);
+		Serial.println(daily_weather_code);
+		Serial.println(f.icon);
 
 		float daily_temperature_2m_max_i = daily_temperature_2m_max[i];
 		f.temp_high = (int)(0.5 + daily_temperature_2m_max_i);
