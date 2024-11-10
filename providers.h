@@ -6,6 +6,8 @@ public:
 	bool fetch_conditions(struct Conditions &c);
 	bool fetch_forecasts(struct Forecast f[], int days);
 
+	virtual void begin();
+
 protected:
 	Provider(const __FlashStringHelper *host): _host(host) {}
 
@@ -37,6 +39,8 @@ protected:
 class OpenMeteo: public Provider {
 public:
 	OpenMeteo();
+
+	void begin();
 
 protected:
 	void on_connect(Stream &c, bool conds);

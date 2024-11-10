@@ -11,6 +11,65 @@
 
 OpenMeteo::OpenMeteo(): Provider(F("api.open-meteo.com")) {}
 
+void OpenMeteo::begin() {
+
+	Provider::begin();
+
+	if (cfg.nearest)
+		return;
+
+	if (!cfg.station) {
+		ERR(println("No City or Station configured!"));
+		return;
+	}
+
+	extern struct Conditions conditions;
+
+	WiFiClient client;
+	const __FlashStringHelper *host = F("geocoding-api.open-meteo.com");
+	if (!client.connect(host, 80)) {
+		ERR(printf("Failed to connect to %s\r\n", host));
+		return;
+	}
+
+	client.print(F("GET /v1/search?count=1&name="));
+	client.print(cfg.station);
+	client.print(F(" HTTP/1.1\r\nHost: "));
+	client.print(host);
+	client.print(F("\r\nConnection: close\r\nAccept: application/json\r\n\r\n"));
+	if (client.connected()) {
+		unsigned long now = millis();
+		while (!client.available())
+			if (millis() - now > 5000) {
+				ERR(println(F("Timeout waiting for server!")));
+				return;
+			}
+		while (client.available()) {
+			int c = client.peek();
+			if (c == '{' || c == '[')
+				break;
+			client.read();
+		}
+		if (!client.available()) {
+			ERR(println(F("Unexpected EOF reading server response!")));
+			return;
+		}
+
+		JsonDocument doc;
+		DeserializationError error = deserializeJson(doc, client);
+		if (error) {
+			ERR(print(F("Deserializing geocoding-api.com response: ")));
+			ERR(println(error.f_str()));
+			return;
+		}
+
+		JsonObject results_0 = doc[F("results")][0];
+		cfg.lat = results_0[F("latitude")];
+		cfg.lon = results_0[F("longitude")];
+		strncpy(conditions.city, results_0[F("name")], sizeof(conditions.city));
+	}
+}
+
 void OpenMeteo::on_connect(Stream &client, bool is_fetch_conditions) {
 
 	client.print(F("/v1/forecast"));

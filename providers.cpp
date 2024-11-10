@@ -1,12 +1,55 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
+#include <Timezone.h>
 
+#include "Configuration.h"
 #include "providers.h"
 #include "state.h"
 #include "dbg.h"
 
+void Provider::begin() {
+
+	extern struct Conditions conditions;
+
+	if (!cfg.nearest)
+		return;
+
+	WiFiClient client;
+	const __FlashStringHelper *host = F("ip-api.com");
+	bool is_geo = false;
+	if (client.connect(host, 80)) {
+		client.print(F("GET /json HTTP/1.1\r\nHost: "));
+		client.print(host);
+		client.print(F("\r\nConnection: close\r\n\r\n"));
+		if (client.connected()) {
+			unsigned long now = millis();
+			while (!client.available())
+				if (millis() - now > 5000)
+					return;
+
+			client.find("\r\n\r\n");
+
+			JsonDocument geo;
+			DeserializationError error = deserializeJson(geo, client);
+			if (error) {
+				ERR(print(F("Deserializing ip-api.com response: ")));
+				ERR(println(error.f_str()));
+			} else {
+				// if success, decode...
+				cfg.lat = geo["lat"];
+				cfg.lon = geo["lon"];
+				strncpy(conditions.city, geo["city"], sizeof(conditions.city));
+				is_geo = true;
+			}
+		}
+	}
+	cfg.nearest = is_geo;
+	Serial.printf("provider: %d\r\n", is_geo);
+}
+
 bool Provider::connect_and_get(WiFiClient &client, bool conds) {
+
 	if (client.connect(_host, 80)) {
 
 		client.print(F("GET "));
@@ -26,7 +69,7 @@ bool Provider::connect_and_get(WiFiClient &client, bool conds) {
 			while (client.available()) {
 				int c = client.peek();
 				if (c == '{' || c == '[')
-					return true;;
+					return true;
 				client.read();
 			}
 			ERR(println(F("Unexpected EOF reading server response!")));
