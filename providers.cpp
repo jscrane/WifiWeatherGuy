@@ -7,84 +7,38 @@
 #include "providers.h"
 #include "state.h"
 #include "dbg.h"
+#include "jsonclient.h"
 
 void Provider::begin() {
-
-	extern struct Conditions conditions;
 
 	if (!cfg.nearest)
 		return;
 
-	WiFiClient client;
-	const __FlashStringHelper *host = F("ip-api.com");
-	bool is_geo = false;
-	if (client.connect(host, 80)) {
-		client.print(F("GET /json HTTP/1.1\r\nHost: "));
-		client.print(host);
-		client.print(F("\r\nConnection: close\r\n\r\n"));
-		if (client.connected()) {
-			unsigned long now = millis();
-			while (!client.available())
-				if (millis() - now > 5000)
-					return;
+	JsonClient client(F("ip-api.com"));
+	if (client.get("/json")) {
+		extern struct Conditions conditions;
+		JsonDocument geo;
 
-			client.find("\r\n\r\n");
-
-			JsonDocument geo;
-			DeserializationError error = deserializeJson(geo, client);
-			if (error) {
-				ERR(print(F("Deserializing ip-api.com response: ")));
-				ERR(println(error.f_str()));
-			} else {
-				// if success, decode...
-				cfg.lat = geo["lat"];
-				cfg.lon = geo["lon"];
-				strncpy(conditions.city, geo["city"], sizeof(conditions.city));
-				is_geo = true;
-			}
+		DeserializationError error = deserializeJson(geo, client);
+		if (error) {
+			ERR(print(F("Deserializing ip-api.com response: ")));
+			ERR(println(error.f_str()));
+		} else {
+			cfg.lat = geo["lat"];
+			cfg.lon = geo["lon"];
+			strncpy(conditions.city, geo["city"], sizeof(conditions.city));
+			cfg.nearest = true;
 		}
 	}
-	cfg.nearest = is_geo;
-}
-
-bool Provider::connect_and_get(WiFiClient &client, bool conds) {
-
-	if (client.connect(_host, 80)) {
-
-		client.print(F("GET "));
-
-		on_connect(client, conds);
-
-		client.print(F(" HTTP/1.1\r\nHost: "));
-		client.print(_host);
-		client.print(F("\r\nConnection: close\r\nAccept: application/json\r\n\r\n"));
-		if (client.connected()) {
-			unsigned long now = millis();
-			while (!client.available())
-				if (millis() - now > 5000) {
-					ERR(println(F("Timeout waiting for server!")));
-					return false;
-				}
-			while (client.available()) {
-				int c = client.peek();
-				if (c == '{' || c == '[')
-					return true;
-				client.read();
-			}
-			ERR(println(F("Unexpected EOF reading server response!")));
-			return false;
-		}
-	}
-	ERR(println(F("Failed to connect!")));
-	stats.connect_failures++;
-	return false;
 }
 
 bool Provider::fetch_conditions(struct Conditions &conditions) {
-	WiFiClient client;
-	bool ret = false;
 
-	if (connect_and_get(client, true)) {
+	JsonClient client(_host);
+	bool ret = false;
+	auto lambda = [&](WiFiClient &c) { on_connect(c, true); };
+
+	if (client.get(&lambda)) {
 		JsonDocument doc;
 		DeserializationError error = deserializeJson(doc, client);
 		if (error) {
@@ -104,10 +58,11 @@ bool Provider::fetch_conditions(struct Conditions &conditions) {
 
 bool Provider::fetch_forecasts(struct Forecast forecasts[], int days) {
 
-	WiFiClient client;
+	JsonClient client(_host);
 	bool ret = false;
+	auto lambda = [&](WiFiClient &c) { on_connect(c, false); };
 
-	if (connect_and_get(client, false)) {
+	if (client.get(&lambda)) {
 		JsonDocument doc;
 		DeserializationError error = deserializeJson(doc, client);
 		if (error) {

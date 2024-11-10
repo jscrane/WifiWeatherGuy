@@ -1,5 +1,4 @@
-#ifndef __CONFIGURATION_H__
-#define __CONFIGURATION_H__
+#pragma once
 
 class Configuration {
 public:
@@ -30,5 +29,3 @@ public:
 
 extern config cfg;
 extern Timezone *tz;
-
-#endif

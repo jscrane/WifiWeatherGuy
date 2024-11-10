@@ -1,5 +1,4 @@
-#ifndef __STATE_H__
-#define __STATE_H__
+#pragma once
 
 struct Conditions {
 	time_t epoch;
@@ -52,5 +51,3 @@ struct Statistics {
 };
 
 extern struct Statistics stats;
-
-#endif

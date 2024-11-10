@@ -1,5 +1,4 @@
-#ifndef __PROVIDERS_H__
-#define __PROVIDERS_H__
+#pragma once
 
 class Provider {
 public:
@@ -21,8 +20,6 @@ protected:
 	const char *weather_description(int wmo_code);
 
 private:
-	bool connect_and_get(WiFiClient &c, bool conds);
-
 	const __FlashStringHelper *_host;
 };
 
@@ -47,5 +44,3 @@ protected:
 	bool update_conditions(class JsonDocument &doc, struct Conditions &c);
 	bool update_forecasts(class JsonDocument &doc, struct Forecast f[], int days);
 };
-
-#endif
