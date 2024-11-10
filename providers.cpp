@@ -45,7 +45,6 @@ void Provider::begin() {
 		}
 	}
 	cfg.nearest = is_geo;
-	Serial.printf("provider: %d\r\n", is_geo);
 }
 
 bool Provider::connect_and_get(WiFiClient &client, bool conds) {
