@@ -1,5 +1,4 @@
-#ifndef __SWITCH_H__
-#define __SWITCH_H__
+#pragma once
 
 class Switch {
 public:
@@ -25,5 +24,3 @@ private:
 	unsigned _millis, _reset;
 	bool _on;
 };
-
-#endif

@@ -10,10 +10,9 @@
 #include "providers.h"
 #include "dbg.h"
 
-const char host[] = "api.openweathermap.org";
-static bool forecast;
+OpenWeatherMap::OpenWeatherMap(): Provider(F("api.openweathermap.org")) {}
 
-void OpenWeatherMap::on_connect(WiFiClient &client, bool conds) {
+void OpenWeatherMap::on_connect(Stream &client, bool conds) {
 	client.print(F("/data/2.5/"));
 	if (conds)
 		client.print(F("weather"));
@@ -48,7 +47,6 @@ bool OpenWeatherMap::update_conditions(JsonDocument &root, struct Conditions &c)
 	if (epoch <= c.epoch)
 		return false;
 
-	stats.num_updates++;
 	if (c.epoch)
 		stats.update(epoch - c.epoch);
 	c.epoch = epoch;
@@ -90,31 +88,8 @@ bool OpenWeatherMap::update_conditions(JsonDocument &root, struct Conditions &c)
 	return true;
 }
 
-//const unsigned cbytes = JSON_ARRAY_SIZE(3) + 2*JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + 3*JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(12) + 976;
-const unsigned cbytes = 24576;
 
-bool OpenWeatherMap::fetch_conditions(struct Conditions &conditions) {
-	WiFiClient client;
-	bool ret = false;
-
-	if (connect_and_get(client, host, true)) {
-		DynamicJsonDocument doc(cbytes);
-		auto error = deserializeJson(doc, client);
-		if (error) {
-			ERR(println(F("Failed to parse!")));
-			stats.parse_failures++;
-		} else {
-			update_conditions(doc, conditions);
-			DBG(print(F("Done ")));
-			DBG(println(doc.memoryUsage()));
-			ret = true;
-		}
-	}
-	client.stop();
-	return ret;
-}
-
-static void update_forecasts(JsonDocument &root, struct Forecast fs[], int n) {
+bool OpenWeatherMap::update_forecasts(JsonDocument &root, struct Forecast fs[], int n) {
 	int cnt = root[F("cnt")];
 	const JsonArray &list = root[F("list")];
 
@@ -137,30 +112,5 @@ static void update_forecasts(JsonDocument &root, struct Forecast fs[], int n) {
 		f.wind_degrees = wind[F("deg")];
 		f.ave_wind = ceil(float(wind[F("speed")]) * 3.6);
 	}
-}
-
-// const unsigned fbytes = 16*JSON_ARRAY_SIZE(1) + JSON_ARRAY_SIZE(16) + 2*JSON_OBJECT_SIZE(0) + 46*JSON_OBJECT_SIZE(1) + 17*JSON_OBJECT_SIZE(2) + 17*JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + 32*JSON_OBJECT_SIZE(8) + 12603;
-const unsigned fbytes = cbytes;
-
-bool OpenWeatherMap::fetch_forecasts(struct Forecast forecasts[], int days) {
-	WiFiClient client;
-	bool ret = false;
-
-	forecast = true;
-	if (connect_and_get(client, host, false)) {
-		DynamicJsonDocument doc(fbytes);
-		auto error = deserializeJson(doc, client);
-		if (error) {
-			ERR(println(F("Failed to parse!")));
-			stats.parse_failures++;
-		} else {
-			update_forecasts(doc, forecasts, days);
-			DBG(print(F("Done ")));
-			DBG(println(doc.memoryUsage()));
-			ret = true;
-		}
-	}
-	forecast = false;
-	client.stop();
-	return ret;
+	return true;
 }
