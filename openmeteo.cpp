@@ -24,14 +24,15 @@ void OpenMeteo::begin() {
 		return;
 	}
 
-	JsonClient client(F("geocoding-api.open-meteo.com"));
+	WiFiClient wifi;
+	JsonClient client(wifi, F("geocoding-api.open-meteo.com"));
 	char path[80];
 	snprintf(path, sizeof(path), "/v1/search?count=1&name=%s", cfg.station);
 	if (client.get(path)) {
 
 		extern struct Conditions conditions;
 		JsonDocument doc;
-		DeserializationError error = deserializeJson(doc, client);
+		DeserializationError error = deserializeJson(doc, wifi);
 		if (error) {
 			ERR(print(F("Deserializing geocoding-api.com response: ")));
 			ERR(println(error.f_str()));
@@ -43,6 +44,7 @@ void OpenMeteo::begin() {
 		cfg.lon = results_0[F("longitude")];
 		strncpy_P(conditions.city, results_0[F("name")], sizeof(conditions.city));
 	}
+	wifi.stop();
 }
 
 void OpenMeteo::on_connect(Stream &client, bool is_fetch_conditions) {
@@ -149,8 +151,6 @@ bool OpenMeteo::update_forecasts(JsonDocument &doc, struct Forecast forecasts[],
 		int daily_weather_code_i = daily_weather_code[i];
 		strncpy_P(f.conditions, weather_description(daily_weather_code_i), sizeof(f.conditions));
 		snprintf(f.icon, sizeof(f.icon), "%dd", daily_weather_code_i);
-		Serial.println(daily_weather_code);
-		Serial.println(f.icon);
 
 		float daily_temperature_2m_max_i = daily_temperature_2m_max[i];
 		f.temp_high = (int)(0.5 + daily_temperature_2m_max_i);

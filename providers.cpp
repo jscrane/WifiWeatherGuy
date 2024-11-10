@@ -14,12 +14,13 @@ void Provider::begin() {
 	if (!cfg.nearest)
 		return;
 
-	JsonClient client(F("ip-api.com"));
+	WiFiClient wifi;
+	JsonClient client(wifi, F("ip-api.com"));
 	if (client.get("/json")) {
 		extern struct Conditions conditions;
 		JsonDocument geo;
 
-		DeserializationError error = deserializeJson(geo, client);
+		DeserializationError error = deserializeJson(geo, wifi);
 		if (error) {
 			ERR(print(F("Deserializing ip-api.com response: ")));
 			ERR(println(error.f_str()));
@@ -30,17 +31,19 @@ void Provider::begin() {
 			cfg.nearest = true;
 		}
 	}
+	wifi.stop();
 }
 
 bool Provider::fetch_conditions(struct Conditions &conditions) {
 
-	JsonClient client(_host);
+	WiFiClient wifi;
+	JsonClient client(wifi, _host);
 	bool ret = false;
 	auto lambda = [&](Stream &s) { on_connect(s, true); };
 
 	if (client.get(&lambda)) {
 		JsonDocument doc;
-		DeserializationError error = deserializeJson(doc, client);
+		DeserializationError error = deserializeJson(doc, wifi);
 		if (error) {
 			ERR(print(F("Deserialization of Conditions failed: ")));
 			ERR(println(error.f_str()));
@@ -52,19 +55,20 @@ bool Provider::fetch_conditions(struct Conditions &conditions) {
 			DBG(print(F("Done ")));
 		}
 	}
-	client.stop();
+	wifi.stop();
 	return ret;
 }
 
 bool Provider::fetch_forecasts(struct Forecast forecasts[], int days) {
 
-	JsonClient client(_host);
+	WiFiClient wifi;
+	JsonClient client(wifi, _host);
 	bool ret = false;
 	auto lambda = [&](Stream &s) { on_connect(s, false); };
 
 	if (client.get(&lambda)) {
 		JsonDocument doc;
-		DeserializationError error = deserializeJson(doc, client);
+		DeserializationError error = deserializeJson(doc, wifi);
 		if (error) {
 			ERR(print(F("Deserialization of Forecasts failed: ")));
 			ERR(println(error.f_str()));
@@ -74,7 +78,7 @@ bool Provider::fetch_forecasts(struct Forecast forecasts[], int days) {
 			DBG(print(F("Done ")));
 		}
 	}
-	client.stop();
+	wifi.stop();
 	return ret;
 }
 

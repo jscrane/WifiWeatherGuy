@@ -1,8 +1,12 @@
 #pragma once
 
-class JsonClient: public WiFiClient {
+class JsonClient {
 public:
-	JsonClient(const __FlashStringHelper *host): _host(host) {}
+	JsonClient(WiFiClient &client, const __FlashStringHelper *host):
+		JsonClient(client, host, 80) {}
+
+	JsonClient(WiFiClient &client, const __FlashStringHelper *host, unsigned port):
+		_client(client), _host(host), _port(port) {}
 
 	bool get(const char *path) {
 
@@ -13,44 +17,50 @@ public:
 	template<typename F>
 	bool get(const F *func) {
 
-		if (!connect(_host, 80)) {
+		if (!_client.connect(_host, _port)) {
 			ERR(print(F("Failed to connect: ")));
-			ERR(println(_host));
+			ERR(print(_host));
+			ERR(print(':'));
+			ERR(print(_port));
 			return false;
 		}
-		print(F("GET "));
+		_client.print(F("GET "));
 
-		(*func)(*this);
+		(*func)(_client);
 
-		println(F(" HTTP/1.1"));
-		print(F("Host: "));
-		println(_host);
-		println(F("Connection: close"));
-		println(F("Accept: application/json"));
-		println();
+		_client.println(F(" HTTP/1.1"));
+		_client.print(F("Host: "));
+		_client.println(_host);
+		_client.println(F("Connection: close"));
+		_client.println(F("Accept: application/json"));
+		_client.println();
 
-		if (!connected()) {
+		if (!_client.connected()) {
 			ERR(print(F("Not connected")));
 			return false;
 		}
 
 		unsigned long now = millis();
-		while (!available())
+		while (!_client.available())
 			if (millis() - now > 5000) {
 				ERR(println(F("Timeout waiting for server!")));
 				return false;
 			}
-		while (available()) {
-			int c = peek();
+
+		while (_client.available()) {
+			int c = _client.peek();
 			if (c == '{' || c == '[')
 				return true;
-			read();
+			_client.read();
 		}
+
 		ERR(println(F("Unexpected EOF reading server response!")));
 		return false;
 	}
 
 private:
+	WiFiClient &_client;
 	const __FlashStringHelper *_host;
+	const unsigned _port;
 };
 
