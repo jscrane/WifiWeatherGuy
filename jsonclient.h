@@ -10,12 +10,10 @@ public:
 
 	bool get(const char *path) {
 
-		auto lambda = [path](Stream &s) { s.print(path); };
-		return get(&lambda);
+		return get([path](Stream &s) { s.print(path); });
 	}
 
-	template<typename F>
-	bool get(const F *func) {
+	bool get(std::function<void(Stream &)> add_path) {
 
 		if (!_client.connect(_host, _port)) {
 			ERR(print(F("Failed to connect: ")));
@@ -26,7 +24,7 @@ public:
 		}
 		_client.print(F("GET "));
 
-		(*func)(_client);
+		add_path(_client);
 
 		_client.println(F(" HTTP/1.1"));
 		_client.print(F("Host: "));

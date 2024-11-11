@@ -39,9 +39,8 @@ bool Provider::fetch_conditions(struct Conditions &conditions) {
 	WiFiClient wifi;
 	JsonClient client(wifi, _host);
 	bool ret = false;
-	auto lambda = [&](Stream &s) { on_connect(s, true); };
 
-	if (client.get(&lambda)) {
+	if (client.get([&](Stream &s) { on_connect(s, true); })) {
 		JsonDocument doc;
 		DeserializationError error = deserializeJson(doc, wifi);
 		if (error) {
@@ -64,9 +63,8 @@ bool Provider::fetch_forecasts(struct Forecast forecasts[], int days) {
 	WiFiClient wifi;
 	JsonClient client(wifi, _host);
 	bool ret = false;
-	auto lambda = [&](Stream &s) { on_connect(s, false); };
 
-	if (client.get(&lambda)) {
+	if (client.get([&](Stream &s) { on_connect(s, false); })) {
 		JsonDocument doc;
 		DeserializationError error = deserializeJson(doc, wifi);
 		if (error) {

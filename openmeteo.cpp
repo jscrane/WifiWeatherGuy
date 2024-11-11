@@ -26,9 +26,12 @@ void OpenMeteo::begin() {
 
 	WiFiClient wifi;
 	JsonClient client(wifi, F("geocoding-api.open-meteo.com"));
-	char path[80];
-	snprintf(path, sizeof(path), "/v1/search?count=1&name=%s", cfg.station);
-	if (client.get(path)) {
+	auto add_path = [sta=cfg.station](Stream &s) {
+		s.print("/v1/search?count=1&name=");
+		s.print(sta);
+	};
+
+	if (client.get(add_path)) {
 
 		extern struct Conditions conditions;
 		JsonDocument doc;
